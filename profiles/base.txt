@@ -96,6 +96,7 @@ readline
 sed
 shadow
 slackpkg
+wget
 sqlite
 sysvinit
 sysvinit-functions
