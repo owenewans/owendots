@@ -1,4 +1,8 @@
 set $mod Mod4
+animations {
+    enabled no
+}
+default_decoration border_radius 0 shadow false dim false
 exec owendots session-ready
 seat seat0 xcursor_theme whiteglass 24
 for_window [app_id="^org[.]owendots[.]control$"] fullscreen enable

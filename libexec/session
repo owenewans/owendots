@@ -50,11 +50,13 @@ done
     IFS= read -r DISPLAY
 } < "$OWENDOTS_SESSION_DIR/ready"
 export WAYLAND_DISPLAY NIRI_SOCKET SWAYSOCK DISPLAY
+if [[ $compositor == scroll ]]; then export SCROLLSOCK="$SWAYSOCK"; fi
 dbus-update-activation-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE NIRI_SOCKET SWAYSOCK
 wl-paste --type text --watch cliphist store &
 wl-paste --type image --watch cliphist store &
 dunst &
-waybar &
+bar_config="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/$compositor.jsonc"
+if [[ -f $bar_config ]]; then waybar -c "$bar_config" & else waybar & fi
 if [[ -x /usr/libexec/polkit-gnome-authentication-agent-1 ]]; then
     /usr/libexec/polkit-gnome-authentication-agent-1 &
 fi

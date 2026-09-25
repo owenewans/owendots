@@ -26,6 +26,8 @@ with tempfile.TemporaryDirectory(prefix='owendots-desktop-') as directory:
     run('theme', 'apply')
     assert (config / 'owendots/backup/foot/foot.ini').read_text() == 'original terminal configuration\n'
     assert 'sway/workspaces' in (config / 'waybar/config.jsonc').read_text()
+    assert 'niri/workspaces' in (config / 'waybar/niri.jsonc').read_text()
+    assert 'sway/workspaces' in (config / 'waybar/scroll.jsonc').read_text()
     assert not (config / 'firefox').exists()
     assert (config / 'owendots/firefox/chrome/userChrome.css').is_file()
     assert (config / 'owendots/palemoon/user.js').is_file()
@@ -53,7 +55,7 @@ with tempfile.TemporaryDirectory(prefix='owendots-desktop-') as directory:
     display.write_text(json.dumps(settings))
     run('theme', 'apply')
     assert 'mode "1920x1080@59.940"' in (config / 'niri/config.kdl').read_text()
-    assert 'output DP-1 mode 1920x1080@59.940Hz scale 1.25' in (config / 'scroll/config').read_text()
+    assert 'output DP-1 mode 1920x1080@59.940Hz scale 1.25 force' in (config / 'scroll/config').read_text()
     before = (config / 'niri/config.kdl').read_text()
     display.write_text(json.dumps(dict(settings, output='DP-1; exec id')))
     run('theme', 'apply', ok=False)

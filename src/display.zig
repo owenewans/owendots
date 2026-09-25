@@ -34,7 +34,7 @@ pub fn append(c: sys.Context, config: []const u8, stage: []const u8) !void {
     const niri = try c.fmt("{s}/niri/config.kdl", .{stage});
     const scroll = try c.fmt("{s}/scroll/config", .{stage});
     try c.write(niri, try c.fmt("{s}\noutput \"{s}\" {{\n    mode \"{s}\"\n    scale {s}\n}}\n", .{ try c.read(niri), settings.output, mode, scale }));
-    try c.write(scroll, try c.fmt("{s}\noutput {s} mode {s}Hz scale {s}\n", .{ try c.read(scroll), settings.output, mode, scale }));
+    try c.write(scroll, try c.fmt("{s}\noutput {s} mode {s}Hz scale {s} force\n", .{ try c.read(scroll), settings.output, mode, scale }));
 }
 
 test "display settings reject configuration injection and retain millihertz" {

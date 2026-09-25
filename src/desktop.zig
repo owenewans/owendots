@@ -27,6 +27,15 @@ pub fn choices(c: Context) !Choices {
     return value.value;
 }
 
+pub fn compositor(c: Context) !@FieldType(Choices, "compositor") {
+    if (c.env) |env| {
+        if (env.get("XDG_SESSION_DESKTOP")) |name| {
+            if (std.meta.stringToEnum(@FieldType(Choices, "compositor"), name)) |active| return active;
+        }
+    }
+    return (try choices(c)).compositor;
+}
+
 pub fn configure(c: Context) !void {
     try user(c);
     const selected: Choices = .{
@@ -56,10 +65,13 @@ pub fn apply(c: Context) !void {
     try palette.generate(c, path, "/usr/share/owendots/templates", stage);
     try @import("display.zig").append(c, root, stage);
     const selected = try choices(c);
+    const bar_path = try c.fmt("{s}/waybar/config.jsonc", .{stage});
+    const bar = try c.read(bar_path);
+    const scroll_bar = try std.mem.replaceOwned(u8, c.a, bar, "niri/workspaces", "sway/workspaces");
+    try c.write(try c.fmt("{s}/waybar/niri.jsonc", .{stage}), bar);
+    try c.write(try c.fmt("{s}/waybar/scroll.jsonc", .{stage}), scroll_bar);
     if (selected.compositor == .scroll) {
-        const bar_path = try c.fmt("{s}/waybar/config.jsonc", .{stage});
-        const content = try c.read(bar_path);
-        try c.write(bar_path, try std.mem.replaceOwned(u8, c.a, content, "niri/workspaces", "sway/workspaces"));
+        try c.write(bar_path, scroll_bar);
     }
     const files = try c.capture(&.{ "find", stage, "-type", "f", "-printf", "%P\\0" });
     var paths = std.mem.splitScalar(u8, files, 0);
@@ -117,7 +129,7 @@ pub fn launch(c: Context, kind: []const u8, arguments: []const []const u8) !void
 
 pub fn screenshot(c: Context) !void {
     try user(c);
-    if ((try choices(c)).compositor == .niri) return c.run(&.{ "niri", "msg", "action", "screenshot" });
+    if ((try compositor(c)) == .niri) return c.run(&.{ "niri", "msg", "action", "screenshot" });
     const region = std.mem.trim(u8, try c.capture(&.{"slurp"}), "\r\n");
     if (region.len == 0) return error.Cancelled;
     const dir = try c.temp();

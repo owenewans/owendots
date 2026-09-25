@@ -98,8 +98,8 @@ pub fn run(c: Context, panel: []const u8) !void {
         const action = try tui.menu(c, "Power", &.{ "back", "Return to the desktop", "suspend", "Suspend", "logout", "End this graphical session", "reboot", "Reboot", "poweroff", "Power off" });
         if (same(action, "back")) return;
         if (same(action, "logout")) {
-            if ((try desktop.choices(c)).compositor == .niri) return c.run(&.{ "niri", "msg", "action", "quit", "--skip-confirmation" });
-            return c.run(&.{ "swaymsg", "exit" });
+            if ((try desktop.compositor(c)) == .niri) return c.run(&.{ "niri", "msg", "action", "quit", "--skip-confirmation" });
+            return c.run(&.{ "scrollmsg", "exit" });
         }
         return c.run(&.{ "loginctl", action });
     }
@@ -107,8 +107,8 @@ pub fn run(c: Context, panel: []const u8) !void {
 }
 
 fn display(c: Context) !void {
-    const compositor = (try desktop.choices(c)).compositor;
-    const dump = try c.capture(if (compositor == .niri) &.{ "niri", "msg", "--json", "outputs" } else &.{ "swaymsg", "-t", "get_outputs", "-r" });
+    const compositor = try desktop.compositor(c);
+    const dump = try c.capture(if (compositor == .niri) &.{ "niri", "msg", "--json", "outputs" } else &.{ "scrollmsg", "-t", "get_outputs", "-r" });
     const value = (try std.json.parseFromSlice(std.json.Value, c.a, dump, .{})).value;
     var outputs: std.ArrayList(std.json.Value) = .empty;
     var items: std.ArrayList([]const u8) = .empty;
@@ -162,11 +162,11 @@ fn display(c: Context) !void {
             c.run(&.{ "rm", "-f", "--", path }) catch {};
         }
         desktop.apply(c) catch {};
-        if (compositor == .scroll) c.run(&.{ "swaymsg", "reload" }) catch {};
+        if (compositor == .scroll) c.run(&.{ "scrollmsg", "reload" }) catch {};
     };
     try c.write(path, try std.json.Stringify.valueAlloc(c.a, settings, .{ .whitespace = .indent_2 }));
     try desktop.apply(c);
-    if (compositor == .scroll) try c.run(&.{ "swaymsg", "reload" });
+    if (compositor == .scroll) try c.run(&.{ "scrollmsg", "reload" });
     _ = try tui.dialog(c, &.{ "--timeout", "15", "--defaultno", "--yesno", "Keep this display mode?\nCancel or wait 15 seconds to restore the previous configuration.", "10", "76" });
     keep = true;
 }
