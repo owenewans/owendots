@@ -153,7 +153,16 @@ Slackware pkgtools.
 | BIOS | MBR | FAT32 at `/boot/limine` |
 
 Keep ordinary `/boot` on the root filesystem for Slackware's kernel symlinks.
-The installer copies the kernel and initramfs to FAT for Limine. See
+The installer copies the kernel and initramfs to FAT for Limine. After explicitly
+installing a kernel package, run `owendots kernel VERSION` to regenerate its
+initramfs and Limine entries. Keep the previous kernel package and modules
+installed; this command retains their boot entry and does not manage packages.
+
+`owendots mirror` measures ICMP latency to official HTTPS mirrors and checks
+HTTPS access before configuring slackpkg. It does not update packages or measure
+download throughput. If ICMP yields no candidates, select a mirror in the TUI.
+
+See
 [Limine's installation requirements](https://github.com/Limine-Bootloader/Limine/blob/trunk/USAGE.md).
 
 ## validation

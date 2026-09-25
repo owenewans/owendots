@@ -12,11 +12,32 @@ pub const Options = struct {
 };
 
 pub fn install(c: sys.Context, o: Options) !void {
+    if (std.mem.eql(u8, try c.absolute(o.target), "/")) return error.TargetIsHostRoot;
+    try stage(c, o, true);
+}
+
+pub fn refresh(c: sys.Context, version: []const u8) !void {
+    if (!std.mem.eql(u8, std.mem.trim(u8, try c.capture(&.{ "id", "-u" }), "\n"), "0")) return c.run(&.{ "doas", "/usr/bin/owendots", "kernel", version });
+    _ = try c.read("/etc/slackware-version");
+    _ = try @import("media.zig").parse(c, try c.read("/var/lib/owendots/media.json"));
+    if (!sys.safeName(version)) return error.InvalidKernelVersion;
+    _ = try std.Io.Dir.cwd().statFile(c.io, try c.fmt("/lib/modules/{s}", .{version}), .{});
+    const uuid = std.mem.trim(u8, try c.capture(&.{ "findmnt", "-n", "-o", "UUID", "--target", "/" }), "\r\n");
+    const fs = std.mem.trim(u8, try c.capture(&.{ "findmnt", "-n", "-o", "FSTYPE", "--target", "/" }), "\r\n");
+    const filesystem = std.meta.stringToEnum(storage.Filesystem, fs) orelse return error.UnsupportedRootFilesystem;
+    const efi = std.Io.Dir.cwd().statFile(c.io, "/sys/firmware/efi", .{}) catch |err| switch (err) {
+        error.FileNotFound => null,
+        else => return err,
+    };
+    try stage(c, .{ .target = "/", .firmware = if (efi != null) .uefi else .bios, .uuid = uuid, .filesystem = filesystem, .version = version, .disk = "" }, false);
+    try c.print("Updated Limine kernel assets for {s}. Existing kernel packages and modules were retained.\n", .{version});
+}
+
+fn stage(c: sys.Context, o: Options, loader: bool) !void {
     // validate all strings used in boot configuration before producing files.
     _ = try render(c.a, o.uuid, o.version, null);
     if (o.filesystem == .fat32) return error.InvalidRootFilesystem;
     const target = try c.absolute(o.target);
-    if (std.mem.eql(u8, target, "/")) return error.TargetIsHostRoot;
     const mount = if (o.firmware == .uefi) "/boot/efi" else "/boot/limine";
     const fat = try c.fmt("{s}{s}", .{ target, mount });
     const fs = std.mem.trim(u8, try c.capture(&.{ "findmnt", "-n", "-o", "FSTYPE", "--mountpoint", fat }), "\r\n");
@@ -60,11 +81,11 @@ pub fn install(c: sys.Context, o: Options) !void {
     const config = try c.fmt("{s}/limine.conf", .{fat});
     try c.write(try c.fmt("{s}.part", .{config}), try render(c.a, o.uuid, o.version, previous));
     try c.run(&.{ "mv", "--", try c.fmt("{s}.part", .{config}), config });
-    if (o.firmware == .uefi) {
+    if (loader and o.firmware == .uefi) {
         const directory = try c.fmt("{s}/EFI/BOOT", .{fat});
         try std.Io.Dir.cwd().createDirPath(c.io, directory);
         try c.run(&.{ "cp", "--", try c.fmt("{s}/usr/share/limine/BOOTX64.EFI", .{target}), try c.fmt("{s}/BOOTX64.EFI", .{directory}) });
-    } else {
+    } else if (loader) {
         try c.run(&.{ "cp", "--", try c.fmt("{s}/usr/share/limine/limine-bios.sys", .{target}), try c.fmt("{s}/limine-bios.sys", .{fat}) });
         try c.run(&.{ "chroot", target, "/usr/bin/limine", "bios-install", o.disk });
     }

@@ -111,6 +111,9 @@ pub fn install(c: Context, json: []const u8) !void {
     // verify the entire selected set before running package installation scripts.
     for (paths.items) |path| try c.run(&.{ "/sbin/upgradepkg", "--install-new", path });
     try c.run(&.{"/sbin/ldconfig"});
+    try c.run(&.{ "/usr/bin/fc-cache", "-f" });
+    try c.run(&.{ "/usr/bin/update-mime-database", "/usr/share/mime" });
+    try c.run(&.{ "/usr/bin/glib-compile-schemas", "/usr/share/glib-2.0/schemas" });
     try @import("system.zig").desktop(c);
     try @import("login.zig").enable(c);
 }

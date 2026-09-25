@@ -159,3 +159,4 @@ xdg-desktop-portal
 xdg-desktop-portal-gtk
 xkeyboard-config
 xorg-server-xwayland
+libXt
