@@ -1,0 +1,62 @@
+#!/bin/bash
+set -eu
+if [[ ${1:-} == ready ]]; then
+    : "${OWENDOTS_SESSION_DIR:?start the session through owendots}"
+    printf '%s\n' "${WAYLAND_DISPLAY:-}" "${NIRI_SOCKET:-}" "${SWAYSOCK:-}" "${DISPLAY:-}" > "$OWENDOTS_SESSION_DIR/ready.tmp"
+    mv -- "$OWENDOTS_SESSION_DIR/ready.tmp" "$OWENDOTS_SESSION_DIR/ready"
+    exit
+fi
+case ${1:-} in niri|scroll) compositor=$1 ;; *) exit 2 ;; esac
+(( EUID != 0 )) || { echo 'Run the desktop as a regular user.' >&2; exit 1; }
+: "${XDG_RUNTIME_DIR:?a PAM/elogind login session is required}"
+if [[ -z ${DBUS_SESSION_BUS_ADDRESS:-} ]]; then
+    exec dbus-run-session -- "$0" "$compositor"
+fi
+for program in "$compositor" pipewire pipewire-pulse wireplumber wl-paste cliphist waybar dunst; do
+    command -v "$program" >/dev/null || { echo "Missing desktop program: $program" >&2; exit 1; }
+done
+export XDG_SESSION_TYPE=wayland XDG_CURRENT_DESKTOP="$compositor" XDG_SESSION_DESKTOP="$compositor"
+export LANG=en_US.UTF-8 TZ=UTC
+export XCURSOR_THEME=whiteglass XCURSOR_SIZE=24
+export OWENDOTS_SESSION_DIR
+OWENDOTS_SESSION_DIR=$(mktemp -d "$XDG_RUNTIME_DIR/owendots.XXXXXXXX")
+cleanup() {
+    trap - EXIT HUP INT TERM
+    local children
+    children=$(jobs -pr)
+    if [[ -n $children ]]; then
+        kill -- $children 2>/dev/null || :
+        wait || :
+    fi
+    rm -rf -- "$OWENDOTS_SESSION_DIR"
+}
+trap cleanup EXIT
+trap 'exit 1' HUP INT TERM
+pipewire &
+pipewire-pulse &
+wireplumber &
+if [[ $compositor == niri ]]; then niri --session & else scroll & fi
+compositor_pid=$!
+for (( attempt=0; attempt<300; attempt++ )); do
+    [[ ! -f $OWENDOTS_SESSION_DIR/ready ]] || break
+    kill -0 "$compositor_pid" 2>/dev/null || { wait "$compositor_pid"; exit 1; }
+    sleep 0.1
+done
+[[ -f $OWENDOTS_SESSION_DIR/ready ]] || { echo 'Compositor startup notification timed out.' >&2; exit 1; }
+{
+    IFS= read -r WAYLAND_DISPLAY
+    IFS= read -r NIRI_SOCKET
+    IFS= read -r SWAYSOCK
+    IFS= read -r DISPLAY
+} < "$OWENDOTS_SESSION_DIR/ready"
+export WAYLAND_DISPLAY NIRI_SOCKET SWAYSOCK DISPLAY
+dbus-update-activation-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE NIRI_SOCKET SWAYSOCK
+wl-paste --type text --watch cliphist store &
+wl-paste --type image --watch cliphist store &
+dunst &
+waybar &
+if [[ -x /usr/libexec/polkit-gnome-authentication-agent-1 ]]; then
+    /usr/libexec/polkit-gnome-authentication-agent-1 &
+fi
+if command -v elephant >/dev/null; then elephant & fi
+wait "$compositor_pid"

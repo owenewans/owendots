@@ -1,4 +1,7 @@
 set $mod Mod4
+exec owendots session-ready
+seat seat0 xcursor_theme whiteglass 24
+for_window [app_id="^org[.]owendots[.]control$"] fullscreen enable
 font pango:JetBrainsMono Nerd Font Mono 10
 input type:keyboard {
     xkb_layout us,ru

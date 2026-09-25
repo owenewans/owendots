@@ -7,9 +7,16 @@ input {
     }
     touchpad { tap; natural-scroll; }
 }
+spawn-at-startup "owendots" "session-ready"
+cursor { xcursor-theme "whiteglass"; xcursor-size 24; }
 prefer-no-csd
 screenshot-path null
 animations { off; }
+hotkey-overlay { skip-at-startup; }
+window-rule {
+    match app-id="^org[.]owendots[.]control$"
+    default-column-width { proportion 1.0; }
+}
 layout {
     gaps 4
     background-color "{{background}}"
@@ -30,6 +37,8 @@ binds {
     Mod+Shift+V { spawn "owendots" "clipboard"; }
     Mod+Comma { spawn "owendots" "menu"; }
     Mod+Q { close-window; }
+    Mod+Shift+Q { quit; }
+    Mod+Shift+Slash { show-hotkey-overlay; }
     Mod+H { focus-column-left; }
     Mod+L { focus-column-right; }
     Mod+J { focus-window-down; }

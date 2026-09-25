@@ -67,6 +67,17 @@ regenerate colors. The first existing configuration is saved under
 literal application arguments. `screenshot` copies a selected region, and
 `clipboard` selects persistent cliphist entries through Walker.
 
+Start an installed desktop from a PAM/elogind login with `owendots session niri`
+or `owendots session scroll`. The session starts PipeWire, WirePlumber, Waybar,
+Dunst and clipboard watchers, then stops its children when the compositor exits.
+The package also provides display-manager session entries.
+
+`network`, `audio`, `bluetooth` and `power` open terminal controls. Bluetooth
+service changes use doas. After installing audio packages, root runs
+`owendots desktop-system` to configure audio-group PAM limits and remove
+PipeWire/WirePlumber file capabilities that interfere with session D-Bus.
+Log out and back in to apply those limits.
+
 From the prepared live environment, start the installer as root:
 
 ```sh
@@ -135,6 +146,10 @@ and root key login. BIOS/F2FS passed disk boot, DHCP, zram and user locale check
 Container tests cover palette rejection, config backups, managed browser
 profiles and literal launch arguments. Desktop, kernel updates, Ventoy and the remaining
 filesystem cases still need acceptance.
+
+The Niri desktop has opened Foot, htop and a Firefox HTTPS page in QEMU.
+Session tests cover compositor environment transfer and child cleanup in
+Slackware-current. Physical GPU, Bluetooth and modem checks remain outstanding.
 
 ## license
 

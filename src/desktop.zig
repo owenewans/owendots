@@ -106,7 +106,9 @@ pub fn launch(c: Context, kind: []const u8, arguments: []const []const u8) !void
         try argv.appendSlice(c.a, &.{ browser, "--no-remote", "--profile", try c.fmt("{s}/owendots/{s}", .{ try config(c), browser }) });
     } else if (std.mem.eql(u8, kind, "files") or std.mem.eql(u8, kind, "telegram") or std.mem.eql(u8, kind, "monitor") or std.mem.eql(u8, kind, "editor")) {
         const program = if (std.mem.eql(u8, kind, "files")) "yazi" else if (std.mem.eql(u8, kind, "telegram")) @tagName(selected.telegram) else if (std.mem.eql(u8, kind, "monitor")) "htop" else "micro";
-        try argv.appendSlice(c.a, &.{ @tagName(selected.terminal), "-e", program });
+        try argv.append(c.a, @tagName(selected.terminal));
+        if (std.mem.eql(u8, kind, "monitor")) try argv.append(c.a, if (selected.terminal == .foot) "--app-id=org.owendots.control" else "--class=org.owendots.control");
+        try argv.appendSlice(c.a, &.{ "-e", program });
     } else return error.UnknownApplication;
     try argv.appendSlice(c.a, arguments);
     try c.run(argv.items);

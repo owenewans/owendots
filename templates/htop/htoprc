@@ -1,5 +1,4 @@
 config_reader_min_version=3
-fields=0 48 47 46 1
 hide_kernel_threads=1
 hide_userland_threads=1
 shadow_other_users=0
@@ -15,6 +14,7 @@ column_meter_modes_1=2 2 2
 color_scheme=0
 enable_mouse=1
 delay=15
-tree_view=0
-sort_key=46
-sort_direction=-1
+screen:Main=PID USER PERCENT_CPU PERCENT_MEM M_RESIDENT Command
+.tree_view=0
+.sort_key=PERCENT_CPU
+.sort_direction=-1

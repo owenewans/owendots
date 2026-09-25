@@ -17,6 +17,8 @@ jobs:
           sudo install -d /usr/share/owendots
           sudo cp -R templates palette.toml /usr/share/owendots/
           PATH="$PWD/zig-out/bin:$PATH" python3 tests/desktop.py
+          bash -n libexec/session
+          python3 tests/session.py libexec/session
       - run: zig-out/bin/owendots theme generate palette.toml templates generated
       - name: Validate generated structured configuration
         run: |

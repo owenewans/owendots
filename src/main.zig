@@ -9,6 +9,7 @@ const data = @import("data.zig");
 const media = @import("media.zig");
 const installer = @import("installer.zig");
 const desktop = @import("desktop.zig");
+const control = @import("control.zig");
 
 fn execute(c: sys.Context, args: []const []const u8) !void {
     if (args.len == 1 or std.mem.eql(u8, args[1], "--help")) {
@@ -24,6 +25,15 @@ fn execute(c: sys.Context, args: []const []const u8) !void {
     if (args.len >= 3 and std.mem.eql(u8, args[1], "launch")) return desktop.launch(c, args[2], args[3..]);
     if (args.len == 2 and std.mem.eql(u8, args[1], "screenshot")) return desktop.screenshot(c);
     if (args.len == 2 and std.mem.eql(u8, args[1], "clipboard")) return desktop.clipboard(c);
+    if (args.len == 2 and (std.mem.eql(u8, args[1], "network") or std.mem.eql(u8, args[1], "audio") or std.mem.eql(u8, args[1], "bluetooth") or std.mem.eql(u8, args[1], "power"))) return control.open(c, args[1]);
+    if (args.len == 3 and std.mem.eql(u8, args[1], "control")) return control.run(c, args[2]);
+    if (args.len == 4 and std.mem.eql(u8, args[1], "service")) return control.service(c, args[2], args[3]);
+    if (args.len == 2 and std.mem.eql(u8, args[1], "desktop-system")) return system.desktop(c);
+    if (args.len == 2 and std.mem.eql(u8, args[1], "session-ready")) return c.run(&.{ "/usr/libexec/owendots/session", "ready" });
+    if (args.len == 3 and std.mem.eql(u8, args[1], "session")) {
+        if (!std.mem.eql(u8, args[2], "niri") and !std.mem.eql(u8, args[2], "scroll")) return error.UnknownCompositor;
+        return c.run(&.{ "/usr/libexec/owendots/session", args[2] });
+    }
     return error.UnknownCommand;
 }
 
@@ -48,4 +58,5 @@ test {
     std.testing.refAllDecls(media);
     std.testing.refAllDecls(installer);
     std.testing.refAllDecls(desktop);
+    std.testing.refAllDecls(control);
 }

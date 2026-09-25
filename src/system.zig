@@ -126,6 +126,29 @@ pub fn addUser(c: Context, target: []const u8, user: []const u8, wheel: bool, se
     try password(c, target, user, secret);
 }
 
+pub fn desktop(c: Context) !void {
+    if (!std.mem.eql(u8, std.mem.trim(u8, try c.capture(&.{ "id", "-u" }), "\n"), "0")) return error.RootRequired;
+    _ = try c.read("/etc/slackware-version");
+    _ = try @import("media.zig").parse(c, try c.read("/var/lib/owendots/media.json"));
+    // glib rejects session bus environment variables for capability-marked executables.
+    // grant audio scheduling through PAM limits instead, effective on the next login.
+    try c.write("/etc/security/limits.d/90-owendots-audio.conf", "@audio - rtprio 80\n@audio - nice -11\n@audio - memlock 524288\n");
+    for ([_][]const u8{ "/usr/bin/pipewire", "/usr/bin/wireplumber" }) |path| {
+        const caps = try c.capture(&.{ "/sbin/getcap", path });
+        if (std.mem.trim(u8, caps, "\r\n ").len > 0) try c.run(&.{ "/sbin/setcap", "-r", path });
+    }
+    const pulse = "/etc/rc.d/rc.pulseaudio";
+    const file = std.Io.Dir.cwd().openFile(c.io, pulse, .{}) catch |err| switch (err) {
+        error.FileNotFound => null,
+        else => return err,
+    };
+    if (file) |f| {
+        f.close(c.io);
+        try c.run(&.{ "chmod", "644", pulse });
+    }
+    try c.print("Configured PipeWire scheduling for the audio group. Log out and back in.\n", .{});
+}
+
 test "identity validation rejects shell and configuration injection" {
     try std.testing.expect(validUser("owenewans"));
     try std.testing.expect(!validUser("root"));

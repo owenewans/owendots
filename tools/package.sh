@@ -9,6 +9,17 @@ mkdir -p "$OUTPUT" "$WORK"
 OUTPUT=$(realpath "$OUTPUT")
 WORK=$(realpath "$WORK")
 install -Dm755 "$project/zig-out/bin/owendots" "$WORK/usr/bin/owendots"
+install -Dm755 "$project/libexec/session" "$WORK/usr/libexec/owendots/session"
+install -d "$WORK/usr/share/wayland-sessions"
+for compositor in niri scroll; do
+    cat > "$WORK/usr/share/wayland-sessions/owendots-$compositor.desktop" <<EOF
+[Desktop Entry]
+Name=owendots ($compositor)
+Exec=owendots session $compositor
+Type=Application
+DesktopNames=$compositor
+EOF
+done
 install -d "$WORK/usr/share/owendots" "$WORK/usr/doc/owendots" "$WORK/install"
 cp -R "$project/templates" "$WORK/usr/share/owendots/"
 cp "$project/palette.toml" "$WORK/usr/share/owendots/"
