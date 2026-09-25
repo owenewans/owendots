@@ -1,71 +1,101 @@
+<div align="center">
+
 # owendots
 
-Slackware64-current installer and workstation configuration for owenewans.
-New code is Unlicense. The old owenslackinstall repository is a design reference;
-its GPL implementation is not included here.
+slackware-current installer and workstation configuration.
 
-Development is in progress. There is no finished desktop image or release yet.
-See [SPEC.md](SPEC.md) for scope and acceptance requirements.
+<a href="https://count.owenewans.org/owenewans/owendots?theme=moebooru-h&notitle"><img src="https://count.owenewans.org/owenewans/owendots?theme=moebooru-h&notitle" alt="repository views"></a>
 
-## Build and checks
+`zig` `desktop` `slackware`
 
-Requires Zig 0.16.0 on the development machine:
+</div>
+
+## features
+
+- manual partition planning for UEFI/GPT and BIOS/MBR with Limine
+- ext4, XFS or F2FS for root and an optional separate home partition
+- package verification against an explicit Slackware64-current media manifest
+- user accounts, doas, SSH settings and private key import
+- USB directory import with file modes, symlinks and renamed collision copies
+- application configuration templates generated from one palette
+
+Development is in progress. Desktop deployment and the Raygui control program
+are unfinished; QEMU installation and boot acceptance remain pending. See
+[scope and acceptance requirements](SPEC.md).
+
+## build
+
+Requires Zig 0.16.0:
 
 ```sh
 zig build test
 zig build -Dtarget=x86_64-linux-musl -Doptimize=ReleaseSafe
 ```
 
-The command-line executable is static. Installer runtime tools come from the
-Slackware live environment, including dialog, pkgtools and filesystem utilities.
-The current modules cover manual partition planning, media verification, target
-configuration, user/SSH setup, USB import, Limine boot assets and palette generation.
-The installation path still requires QEMU acceptance tests and complete media.
+The static executable is `zig-out/bin/owendots`. At installation time, use a
+Slackware live environment with `dialog`, pkgtools and filesystem utilities.
 
-Generate configurations without changing your running desktop:
+## usage
+
+Generate application configurations:
 
 ```sh
 owendots theme generate palette.toml templates ./generated
 ```
 
-Colors come from the palette file. The generator rejects missing and unknown
-keys. Application templates are under `templates/`; the desktop deployment and
-Raygui control program are still being implemented.
+Edit colours in `palette.toml` and application templates in `templates/`.
+The generator checks palette keys before writing the output directory.
 
-## Installation media
+From the prepared live environment, start the installer as root:
 
-The development-only Python tool downloads exactly the profile's packages,
-checks the Slackware key fingerprint and signed checksums, then records SHA-256
-for the installer. It does not resolve dependencies.
+```sh
+owendots install /media/owendots
+```
+
+Choose the disk, partition offsets, filesystems, hostname and accounts. Review
+the complete plan and enter the target disk's full path before writing.
+Installation erases the selected disk. Test development builds in disposable
+QEMU machines.
+
+## media
+
+Prepare the package directory on the development machine:
 
 ```sh
 python3 tools/media.py --output ./media
 ```
 
-This creates a package directory, not a bootable ISO. Native packages can be
-supplied with `--native-manifest`, a JSON list containing `name`, `file`, `sha256`,
-`source` and `role` (`base` or `desktop`), next to the package files. Files must
-already have their published HTTPS source URLs and exact checksums.
+The tool downloads the packages listed in `profiles/base.txt`, checks the
+Slackware signing key and signed checksums, then records each package's SHA-256.
+It creates a package directory, not a bootable ISO.
 
-The installer refuses incomplete media before offering disk changes. It requires
-a live environment marker and root, displays the plan, and requires the full disk
-path before writing. The source includes disk-writing code; only test it inside
-disposable QEMU machines until the acceptance scenarios pass.
+Supply native packages with `--native-manifest`: a JSON list beside the package
+files, with `name`, `file`, `sha256`, `source` and `role` (`base` or `desktop`).
+Use the published HTTPS download URL for `source`.
 
-Boot layouts:
+Build recipes and foreign package conversion live in
+[holypkg](https://github.com/owenewans/holypkg). Installed packages remain under
+Slackware pkgtools.
 
-- UEFI/GPT: FAT32 at `/boot/efi`.
-- BIOS/MBR: FAT32 at `/boot/limine`.
-- Root and optional separate home: ext4, XFS or F2FS.
+## boot layout
 
-The ordinary `/boot` remains on the root filesystem so Slackware kernel packages
-can create symlinks. Limine reads copied kernel/initramfs files from the FAT
-partition. This follows [Limine's filesystem and installation requirements](https://github.com/Limine-Bootloader/Limine/blob/trunk/USAGE.md).
+| mode | partition table | boot files |
+| --- | --- | --- |
+| UEFI | GPT | FAT32 at `/boot/efi` |
+| BIOS | MBR | FAT32 at `/boot/limine` |
 
-## Evidence
+Keep ordinary `/boot` on the root filesystem for Slackware's kernel symlinks.
+The installer copies the kernel and initramfs to FAT for Limine. See
+[Limine's installation requirements](https://github.com/Limine-Bootloader/Limine/blob/trunk/USAGE.md).
 
-Eleven module tests passed in a Slackware-current Podman environment, including
-USB copy collisions, symlink/mode preservation, repeated target configuration,
-identity validation, manual layout validation and media restrictions. This does
-not yet establish that the installer boots a target machine. QEMU installation,
-boot, desktop and update evidence will be recorded before release.
+## validation
+
+Module tests have passed in Slackware-current under Podman, including manual
+layouts, media checks, repeated target configuration and USB copy behaviour.
+Boot, desktop and kernel update acceptance will be recorded after QEMU tests.
+
+## license
+
+[Unlicense](LICENSE). The old
+[owenslackinstall](https://github.com/owenewans/owenslackinstall) is a design
+reference; its GPL implementation is not included.
