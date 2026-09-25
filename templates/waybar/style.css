@@ -1,0 +1,16 @@
+* {
+    font-family: "JetBrainsMono Nerd Font Mono";
+    font-size: 12px;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    text-shadow: none;
+    transition: none;
+    min-height: 0;
+}
+window#waybar { background: {{background}}; color: {{foreground}}; }
+#workspaces button { padding: 0 8px; color: {{muted}}; background: {{background}}; }
+#workspaces button.active, #workspaces button.focused { color: {{accent}}; background: {{surface}}; }
+#clock, #network, #wireplumber, #battery, #custom-settings { padding: 0 8px; }
+#battery.warning { color: {{yellow}}; }
+#battery.critical { color: {{red}}; }

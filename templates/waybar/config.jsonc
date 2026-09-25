@@ -1,0 +1,12 @@
+{
+  "layer": "top",
+  "height": 26,
+  "modules-left": ["niri/workspaces"],
+  "modules-center": ["clock"],
+  "modules-right": ["network", "wireplumber", "battery", "custom/settings"],
+  "clock": {"timezone": "UTC", "format": "{:%Y-%m-%d %H:%M} UTC"},
+  "network": {"format-ethernet": "net", "format-wifi": "{essid}", "format-disconnected": "offline", "on-click": "owendots network"},
+  "wireplumber": {"format": "vol {volume}%", "format-muted": "muted", "on-click": "owendots audio"},
+  "battery": {"format": "bat {capacity}%", "states": {"warning": 20, "critical": 10}},
+  "custom/settings": {"format": "settings", "on-click": "owendots menu"}
+}

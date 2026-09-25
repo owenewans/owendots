@@ -1,0 +1,13 @@
+[mgr]
+cwd = { fg = "{{accent}}" }
+hovered = { fg = "{{foreground}}", bg = "{{surface}}" }
+preview_hovered = { underline = true }
+border_style = { fg = "{{border}}" }
+
+[status]
+overall = { fg = "{{foreground}}", bg = "{{background}}" }
+
+[mode]
+normal_main = { fg = "{{background}}", bg = "{{accent}}", bold = true }
+select_main = { fg = "{{background}}", bg = "{{green}}", bold = true }
+unset_main = { fg = "{{background}}", bg = "{{red}}", bold = true }

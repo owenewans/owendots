@@ -1,0 +1,35 @@
+name: test
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29
+        with:
+          version: 0.16.0
+      - run: zig build test
+      - run: zig build -Dtarget=x86_64-linux-musl -Doptimize=ReleaseSafe
+      - run: zig-out/bin/owendots theme generate palette.toml templates generated
+      - name: Validate generated structured configuration
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,tomllib
+          for p in pathlib.Path('generated').rglob('*'):
+              if not p.is_file():
+                  continue
+              text=p.read_text()
+              assert '{{' not in text, p
+              if p.suffix == '.json':
+                  json.loads(text)
+              if p.suffix == '.toml':
+                  tomllib.loads(text)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owendots-development
+          path: |
+            zig-out/bin/owendots
+            generated/

@@ -1,0 +1,41 @@
+set $mod Mod4
+font pango:JetBrainsMono Nerd Font Mono 10
+input type:keyboard {
+    xkb_layout us,ru
+    xkb_options grp:caps_toggle
+}
+input type:touchpad {
+    tap enabled
+    natural_scroll enabled
+}
+output * bg {{background}} solid_color
+default_border pixel 1
+default_floating_border pixel 1
+gaps inner 4
+client.focused {{accent}} {{accent}} {{foreground}} {{accent}} {{accent}}
+client.unfocused {{border}} {{background}} {{muted}} {{border}} {{border}}
+bindsym $mod+Return exec owendots launch terminal
+bindsym $mod+Shift+b exec owendots launch browser
+bindsym $mod+Shift+e exec owendots launch files
+bindsym $mod+d exec walker
+bindsym $mod+Shift+v exec owendots clipboard
+bindsym $mod+comma exec owendots menu
+bindsym $mod+q kill
+bindsym $mod+h focus left
+bindsym $mod+l focus right
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+l move right
+bindsym $mod+f fullscreen toggle
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+4 workspace number 4
+bindsym $mod+5 workspace number 5
+bindsym Print exec owendots screenshot
+bindsym $mod+Shift+s exec owendots screenshot
+bindsym XF86AudioRaiseVolume exec wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+
+bindsym XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+bindsym XF86AudioMute exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+bindsym XF86PowerOff exec owendots power

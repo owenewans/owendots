@@ -31,7 +31,8 @@ provenance, source scripts and metadata. Require explicit generic archive layout
 
 Install from Ventoy/current media into manually specified partitions. ext4 is
 the initial filesystem choice; XFS/F2FS are supported for root/home. UEFI/GPT
-uses a FAT32 ESP for kernels/initramfs; BIOS/MBR uses FAT32 /boot. Preserve the
+uses a FAT32 ESP for kernels/initramfs; BIOS/MBR uses FAT32 /boot/limine. The ordinary /boot stays on the root
+filesystem so native kernel packages can create their symlinks. Preserve the
 previous kernel and matching initramfs. No LUKS/LVM/RAID, automatic partitioning,
 configuration export, or disk swap. Use zram. Require a root password.
 

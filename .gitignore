@@ -3,3 +3,4 @@ zig-out/
 artifacts/
 *.qcow2
 *.iso
+__pycache__/

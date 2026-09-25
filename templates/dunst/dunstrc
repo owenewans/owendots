@@ -1,0 +1,28 @@
+[global]
+font = JetBrainsMono Nerd Font Mono 10
+frame_width = 1
+frame_color = "{{border}}"
+corner_radius = 0
+transparency = 0
+width = 360
+origin = top-right
+offset = 8x8
+padding = 8
+horizontal_padding = 8
+history_length = 100
+
+[urgency_low]
+background = "{{background}}"
+foreground = "{{muted}}"
+timeout = 5
+
+[urgency_normal]
+background = "{{background}}"
+foreground = "{{foreground}}"
+timeout = 8
+
+[urgency_critical]
+background = "{{background}}"
+foreground = "{{red}}"
+frame_color = "{{red}}"
+timeout = 0
