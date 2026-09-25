@@ -3,6 +3,11 @@ const std = @import("std");
 pub const Context = struct {
     a: std.mem.Allocator,
     io: std.Io,
+    env: ?*std.process.Environ.Map = null,
+
+    pub fn environment(c: Context, name: []const u8) ![]const u8 {
+        return (c.env orelse return error.MissingEnvironment).get(name) orelse return error.MissingEnvironmentVariable;
+    }
 
     pub fn fmt(c: Context, comptime format: []const u8, args: anytype) ![]const u8 {
         return std.fmt.allocPrint(c.a, format, args);

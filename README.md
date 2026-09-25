@@ -18,9 +18,10 @@ slackware-current installer and workstation configuration.
 - user accounts, doas, SSH settings and private key import
 - USB directory import with file modes, symlinks and renamed collision copies
 - application configuration templates generated from one palette
+- per-user application choices, managed browser profiles and original config backups
 
 Development is in progress. Desktop deployment and the Raygui control program
-are unfinished. BIOS/ext4 and UEFI/XFS base installs have booted in QEMU;
+are unfinished. BIOS/ext4, BIOS/F2FS and UEFI/XFS base installs have booted in QEMU;
 the remaining acceptance scenarios are in progress. See
 [scope and acceptance requirements](SPEC.md).
 
@@ -46,6 +47,25 @@ owendots theme generate palette.toml templates ./generated
 
 Edit colours in `palette.toml` and application templates in `templates/`.
 The generator checks palette keys before writing the output directory.
+
+With the package and applications installed, run as the desktop user:
+
+```sh
+owendots configure
+owendots theme apply
+owendots launch terminal
+owendots launch browser
+```
+
+`configure` selects launch defaults and applies templates; it does not install
+applications. Edit `~/.config/owendots/palette.toml` and run `theme apply` to
+regenerate colors. The first existing configuration is saved under
+`~/.config/owendots/backup/`. Firefox and Pale Moon use managed profiles under
+`~/.config/owendots/`; existing browser profiles remain separate.
+
+`launch` also accepts `files`, `telegram`, `monitor` and `editor`, followed by
+literal application arguments. `screenshot` copies a selected region, and
+`clipboard` selects persistent cliphist entries through Walker.
 
 From the prepared live environment, start the installer as root:
 
@@ -111,7 +131,9 @@ Module tests have passed in Slackware-current under Podman, including manual
 layouts, media checks, repeated target configuration and USB copy behaviour.
 BIOS/MBR with ext4 and UEFI/GPT with XFS have passed base installation and
 Limine disk boot. The UEFI test also passed DHCP, HTTPS, user password login
-and root key login. Desktop, kernel updates, Ventoy and the remaining
+and root key login. BIOS/F2FS passed disk boot, DHCP, zram and user locale checks.
+Container tests cover palette rejection, config backups, managed browser
+profiles and literal launch arguments. Desktop, kernel updates, Ventoy and the remaining
 filesystem cases still need acceptance.
 
 ## license

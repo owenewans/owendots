@@ -1,0 +1,7 @@
+@define-color theme_bg_color {{background}};
+@define-color theme_fg_color {{foreground}};
+@define-color theme_base_color {{surface}};
+@define-color theme_text_color {{foreground}};
+@define-color theme_selected_bg_color {{accent}};
+@define-color theme_selected_fg_color {{background}};
+* { border-radius: 0; box-shadow: none; }

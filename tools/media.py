@@ -14,6 +14,7 @@ parser.add_argument('--output', type=pathlib.Path, required=True)
 parser.add_argument('--mirror', default='https://slackware.osuosl.org/slackware64-current')
 parser.add_argument('--profile', type=pathlib.Path, default=pathlib.Path(__file__).resolve().parent.parent / 'profiles/base.txt')
 parser.add_argument('--native-manifest', type=pathlib.Path)
+parser.add_argument('--role', choices=['base', 'desktop'], default='base')
 args = parser.parse_args()
 root = args.output.resolve()
 root.mkdir(parents=True, exist_ok=True)
@@ -77,7 +78,7 @@ def fetch(name):
             raise RuntimeError('checksum mismatch: ' + path)
         partial.rename(output)
     print('verified', output.name, flush=True)
-    return dict(name=name, file=output.name, sha256=hashlib.sha256(output.read_bytes()).hexdigest(), source=base + '/' + path, role='base')
+    return dict(name=name, file=output.name, sha256=hashlib.sha256(output.read_bytes()).hexdigest(), source=base + '/' + path, role=args.role)
 
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
