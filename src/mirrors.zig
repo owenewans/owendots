@@ -99,6 +99,13 @@ pub fn configure(c: Context) !void {
     _ = try c.read("/etc/slackware-version");
     _ = try @import("media.zig").parse(c, try c.read("/var/lib/owendots/media.json"));
     const chosen = try select(c);
+    const work = try c.temp();
+    defer c.run(&.{ "rm", "-rf", "--", work }) catch {};
+    const key = try c.fmt("{s}/GPG-KEY", .{work});
+    try c.download(try c.fmt("{s}GPG-KEY", .{chosen}), key);
+    try verifyKey(try c.capture(&.{ "gpg2", "--batch", "--with-colons", "--show-keys", key }));
+    const gpg1 = c.capture(&.{ "which", "gpg1" }) catch null;
+    try c.run(&.{ if (gpg1 != null) "gpg1" else "gpg2", "--batch", "--import", key });
     const path = "/etc/slackpkg/mirrors";
     const backup = "/var/lib/owendots/backup/slackpkg-mirrors";
     const old = try c.read(path);
@@ -113,6 +120,30 @@ pub fn configure(c: Context) !void {
     try c.write(temporary, try c.fmt("{s}\n", .{chosen}));
     try std.Io.Dir.cwd().rename(temporary, .cwd(), path, c.io);
     try c.print("Configured the Slackware64-current mirror for slackpkg.\n", .{});
+}
+
+pub fn verifyKey(listing: []const u8) !void {
+    var primary = false;
+    var count: usize = 0;
+    var lines = std.mem.splitScalar(u8, listing, '\n');
+    while (lines.next()) |line| {
+        if (std.mem.startsWith(u8, line, "pub:")) {
+            primary = true;
+        } else if (primary and std.mem.startsWith(u8, line, "fpr:")) {
+            var fields = std.mem.splitScalar(u8, line, ':');
+            for (0..9) |_| _ = fields.next() orelse return error.InvalidSigningKey;
+            if (!std.mem.eql(u8, fields.next() orelse return error.InvalidSigningKey, "EC5649DA401E22ABFA6736EF6A4463C040102233")) return error.InvalidSigningKey;
+            count += 1;
+            primary = false;
+        }
+    }
+    if (count != 1 or primary) return error.InvalidSigningKey;
+}
+
+test "Slackware primary signing key is pinned" {
+    try verifyKey("pub:-:1024:17:key:\nfpr:::::::::EC5649DA401E22ABFA6736EF6A4463C040102233:\n");
+    try std.testing.expectError(error.InvalidSigningKey, verifyKey("pub:-:1024:17:key:\nfpr:::::::::0000000000000000000000000000000000000000:\n"));
+    try std.testing.expectError(error.InvalidSigningKey, verifyKey(""));
 }
 
 test "official mirror parser accepts quoted and unquoted HTTPS links only" {

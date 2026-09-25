@@ -26,7 +26,11 @@ try:
 import os,sys
 from pathlib import Path
 mode=os.environ['MIRROR_TEST']
-if Path(sys.argv[0]).name == 'ping':
+if Path(sys.argv[0]).name.startswith('gpg'):
+    if '--show-keys' in sys.argv:
+        key='0'*40 if mode == 'badkey' else 'EC5649DA401E22ABFA6736EF6A4463C040102233'
+        print('pub:-:1024:17:key:\\nfpr:::::::::'+key+':')
+elif Path(sys.argv[0]).name == 'ping':
     if mode != 'ping': sys.exit(1)
     delay={'fast.example':1,'next.example':2,'slow.example':9}[sys.argv[-1]]
     print(f'rtt min/avg/max/mdev = {delay}/{delay}/{delay}/0 ms')
@@ -38,9 +42,9 @@ else:
     sys.exit(1 if mode == 'fail' or 'fast.example' in sys.argv[-1] else 0)
 ''')
         mock.chmod(0o755)
-        for name in ['curl', 'ping']:
+        for name in ['curl', 'ping', 'gpg1', 'gpg2']:
             (root / name).symlink_to(mock)
-        for mode, expected in [('ping', 'next.example'), ('https', 'slow.example'), ('fail', None)]:
+        for mode, expected in [('ping', 'next.example'), ('https', 'slow.example'), ('fail', None), ('badkey', None)]:
             before = paths[0].read_text()
             env = dict(os.environ, PATH=directory+':'+os.environ['PATH'], MIRROR_TEST=mode)
             result = subprocess.run([sys.argv[1], 'mirror'], env=env, capture_output=True, text=True)
@@ -48,10 +52,11 @@ else:
                 assert result.returncode == 0, result
                 assert paths[0].read_text() == f'https://{expected}/slackware64-current/\n'
             else:
-                assert result.returncode != 0 and 'MirrorUnavailable' in result.stderr, result
+                error = 'InvalidSigningKey' if mode == 'badkey' else 'MirrorUnavailable'
+                assert result.returncode != 0 and error in result.stderr, result
                 assert paths[0].read_text() == before
             assert paths[2].read_text() == '# original mirror list\n'
-    print('PASS mirror latency, HTTPS fallback, backup and failure preservation')
+    print('PASS mirror latency, HTTPS fallback, pinned key, backup and failure preservation')
 finally:
     for path, data in original.items():
         if data is None:

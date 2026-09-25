@@ -176,6 +176,7 @@ installed; this command retains their boot entry and does not manage packages.
 
 Desktop deployment configures slackpkg with an official Slackware64-current
 mirror automatically. It ranks mirrors by ICMP latency and checks HTTPS access.
+It imports the Slackware signing key after verifying its pinned fingerprint.
 If ICMP is unavailable, it selects a working HTTPS mirror from the official list.
 If no mirror works, deployment stops and preserves the previous configuration.
 `owendots mirror` repeats this selection. Mirror selection does not update
