@@ -77,7 +77,7 @@ pub fn apply(c: Context) !void {
     var paths = std.mem.splitScalar(u8, files, 0);
     while (paths.next()) |relative| {
         if (relative.len == 0) continue;
-        if (std.mem.startsWith(u8, relative, "firefox/")) continue;
+        if (std.mem.startsWith(u8, relative, "firefox/") or std.mem.startsWith(u8, relative, "palemoon/")) continue;
         if (!sys.safePath(relative)) return error.InvalidTemplatePath;
         const target = try c.fmt("{s}/{s}", .{ root, relative });
         const backup = try c.fmt("{s}/owendots/backup/{s}", .{ root, relative });
@@ -102,7 +102,8 @@ pub fn apply(c: Context) !void {
     for ([_][]const u8{ "firefox", "palemoon" }) |browser| {
         const profile = try c.fmt("{s}/owendots/{s}", .{ root, browser });
         for ([_][]const u8{ "user.js", "chrome/userChrome.css" }) |file| {
-            try c.write(try c.fmt("{s}/{s}", .{ profile, file }), try c.read(try c.fmt("{s}/firefox/{s}", .{ stage, file })));
+            const source = if (std.mem.eql(u8, file, "user.js")) "firefox" else browser;
+            try c.write(try c.fmt("{s}/{s}", .{ profile, file }), try c.read(try c.fmt("{s}/{s}/{s}", .{ stage, source, file })));
         }
     }
     try c.print("Applied palette. Original files: {s}/owendots/backup\nRestart applications to reload their colors.\n", .{root});

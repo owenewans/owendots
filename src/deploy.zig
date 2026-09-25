@@ -24,6 +24,7 @@ pub const Selection = struct {
             .{ "tele", s.both_telegram or s.launch.telegram == .tele },
             .{ "telegramtui", s.both_telegram or s.launch.telegram == .telegramtui },
             .{ "telegramtui-runtime", s.both_telegram or s.launch.telegram == .telegramtui },
+            .{ "telegramtui-tdlib", s.both_telegram or s.launch.telegram == .telegramtui },
             .{ "niri", s.both_compositors or s.launch.compositor == .niri },
             .{ "xwayland-satellite", s.both_compositors or s.launch.compositor == .niri },
             .{ "scroll", s.both_compositors or s.launch.compositor == .scroll },
@@ -67,7 +68,7 @@ fn contains(manifest: media.Manifest, name: []const u8) bool {
 }
 
 pub fn validate(manifest: media.Manifest, selection: Selection) !void {
-    const required = [_][]const u8{ "owenctl", "ly", "pipewire", "wireplumber", "waybar", "dunst", "wl-clipboard", "cliphist", "slurp", "grim", "micro", "yazi", "swayimg", "mpv", "aria2", "htop", "walker", "elephant", "elephant-desktopapplications", "elephant-runner", "foot", "ghostty", "mozilla-firefox", "palemoon", "tele", "telegramtui", "niri", "scroll" };
+    const required = [_][]const u8{ "owenctl", "ly", "pipewire", "wireplumber", "waybar", "dunst", "wl-clipboard", "cliphist", "slurp", "grim", "micro", "yazi", "swayimg", "mpv", "aria2", "htop", "walker", "elephant", "elephant-desktopapplications", "elephant-runner", "foot", "ghostty", "mozilla-firefox", "palemoon", "tele", "telegramtui", "telegramtui-runtime", "telegramtui-tdlib", "niri", "scroll" };
     for (required) |name| if (selection.includes(name) and !contains(manifest, name)) return error.IncompleteDesktopMedia;
 }
 

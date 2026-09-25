@@ -1,0 +1,28 @@
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+* { border-radius: 0 !important; box-shadow: none !important; text-shadow: none !important; }
+#main-window, #navigator-toolbox, toolbar, menubar, statusbar,
+menupopup, popup, panel, dialog {
+    -moz-appearance: none !important;
+    background: {{background}} !important;
+    color: {{foreground}} !important;
+    font-family: "JetBrainsMono Nerd Font Mono" !important;
+}
+menu, menuitem, label, description, toolbarbutton, .tab-text {
+    color: {{foreground}} !important;
+}
+textbox, #urlbar, #searchbar, .tabbrowser-tab {
+    -moz-appearance: none !important;
+    background: {{surface}} !important;
+    color: {{foreground}} !important;
+    border: 1px solid {{border}} !important;
+}
+input, .textbox-input-box {
+    background: {{surface}} !important;
+    color: {{foreground}} !important;
+}
+.tabbrowser-tab[selected="true"], menuitem[_moz-menuactive="true"] {
+    background: {{accent}} !important;
+    color: {{background}} !important;
+}
+.tabbrowser-tab[selected="true"] .tab-text { color: {{background}} !important; }

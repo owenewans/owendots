@@ -160,3 +160,9 @@ xdg-desktop-portal-gtk
 xkeyboard-config
 xorg-server-xwayland
 libXt
+libXfont2
+libxcvt
+libei
+libdecor
+xkbcomp
+libxkbfile
