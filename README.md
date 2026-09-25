@@ -174,9 +174,12 @@ installing a kernel package, run `owendots kernel VERSION` to regenerate its
 initramfs and Limine entries. Keep the previous kernel package and modules
 installed; this command retains their boot entry and does not manage packages.
 
-`owendots mirror` measures ICMP latency to official HTTPS mirrors and checks
-HTTPS access before configuring slackpkg. It does not update packages or measure
-download throughput. If ICMP yields no candidates, select a mirror in the TUI.
+Desktop deployment configures slackpkg with an official Slackware64-current
+mirror automatically. It ranks mirrors by ICMP latency and checks HTTPS access.
+If ICMP is unavailable, it selects a working HTTPS mirror from the official list.
+If no mirror works, deployment stops and preserves the previous configuration.
+`owendots mirror` repeats this selection. Mirror selection does not update
+packages or measure download throughput.
 
 See
 [Limine's installation requirements](https://github.com/Limine-Bootloader/Limine/blob/trunk/USAGE.md).

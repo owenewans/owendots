@@ -86,6 +86,7 @@ pub fn install(c: Context, json: []const u8) !void {
         if (pkg.role == .desktop and selection.includes(pkg.name)) try plan.writer.print("{s}\n", .{pkg.file});
     }
     try plan.writer.writeAll("\nConfigure PipeWire scheduling, disable PulseAudio autostart, and enable Ly on tty2. Existing application configuration receives a backup when the palette is applied.\n");
+    try plan.writer.writeAll("Select an official Slackware64-current mirror by ping latency and verify HTTPS availability for slackpkg.\n");
     const review = try c.fmt("{s}/plan.txt", .{work});
     try c.write(review, plan.written());
     _ = try tui.dialog(c, &.{ "--textbox", review, "25", "90" });
@@ -110,6 +111,7 @@ pub fn install(c: Context, json: []const u8) !void {
         try paths.append(c.a, path);
     }
     // verify the entire selected set before running package installation scripts.
+    try @import("mirrors.zig").configure(c);
     for (paths.items) |path| try c.run(&.{ "/sbin/upgradepkg", "--install-new", path });
     try c.run(&.{"/sbin/ldconfig"});
     try c.run(&.{ "/usr/bin/fc-cache", "-f" });

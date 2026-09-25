@@ -1,6 +1,5 @@
 const std = @import("std");
 const sys = @import("sys.zig");
-const tui = @import("tui.zig");
 const Context = sys.Context;
 
 pub const Mirror = struct { url: []const u8, host: []const u8, milliseconds: f64 = std.math.inf(f64) };
@@ -86,12 +85,13 @@ pub fn select(c: Context) ![]const u8 {
             return mirror.url;
         }
     }
-    var choices: std.ArrayList([]const u8) = .empty;
-    for (mirrors, 0..) |mirror, i| try choices.appendSlice(c.a, &.{ try c.fmt("{d}", .{i}), mirror.url });
-    const chosen = try tui.menu(c, "No responding mirror passed both ping and HTTPS checks. Select an official mirror.", choices.items);
-    const index = try std.fmt.parseInt(usize, chosen, 10);
-    if (index >= mirrors.len or !try available(c, mirrors[index])) return error.MirrorUnavailable;
-    return mirrors[index].url;
+    try c.print("No mirror passed both ping and HTTPS checks. Checking remaining official mirrors over HTTPS.\n", .{});
+    for (mirrors[replies..]) |mirror| {
+        if (!try available(c, mirror)) continue;
+        try c.print("Selected {s}; ICMP latency unavailable.\n", .{mirror.url});
+        return mirror.url;
+    }
+    return error.MirrorUnavailable;
 }
 
 pub fn configure(c: Context) !void {
@@ -109,7 +109,9 @@ pub fn configure(c: Context) !void {
         },
         else => return err,
     };
-    try c.write(path, try c.fmt("{s}\n", .{chosen}));
+    const temporary = try c.fmt("{s}.owendots-new", .{path});
+    try c.write(temporary, try c.fmt("{s}\n", .{chosen}));
+    try std.Io.Dir.cwd().rename(temporary, .cwd(), path, c.io);
     try c.print("Configured the Slackware64-current mirror for slackpkg.\n", .{});
 }
 
