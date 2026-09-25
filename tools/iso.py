@@ -81,15 +81,24 @@ printf 'root\\n' | /etc/rc.d/rc.S
 # restore the clock after setup backdates it.
 hwclock -s -u
 mkdir -p /run /media/owendots
-printf 'slackware64-current\\n' > /run/owendots-live
 udevadm settle
-for device in /dev/sr* /dev/disk/by-label/OWENDOTS; do
-  [ -b "$device" ] || continue
-  if mount -o ro "$device" /media/owendots; then
-    [ -f /media/owendots/manifest.json ] && break
-    umount /media/owendots
-  fi
+# ventoy creates its mapped ISO after the kernel starts init.
+attempt=0
+while [ "$attempt" -lt 30 ]; do
+  for device in /dev/mapper/ventoy /dev/disk/by-label/OWENDOTS /dev/sr*; do
+    [ -b "$device" ] || continue
+    if mount -o ro "$device" /media/owendots 2>/dev/null; then
+      [ -f /media/owendots/manifest.json ] && break 2
+      umount /media/owendots
+    fi
+  done
+  attempt=$((attempt + 1))
+  sleep 1
 done
+[ -f /media/owendots/manifest.json ] || {
+  printf 'Installer medium not found; cannot initialize the live environment.\\n'
+  exit 1
+}
 if [ -f /media/owendots/manifest.json ]; then
   cd /media/owendots/packages || exit 1
   sha256sum -c /etc/owendots-live-checksums || exit 1
@@ -100,6 +109,7 @@ if [ -f /media/owendots/manifest.json ]; then
   update-ca-certificates
   cd /
 fi
+printf 'slackware64-current\\n' > /run/owendots-live
 dhcpcd -w -t 20 >/var/log/owendots-dhcp.log 2>&1 || printf 'DHCP unavailable; configure networking before downloading.\\n'
 printf '\\nRun: owendots install /media/owendots\\n'
 ''')

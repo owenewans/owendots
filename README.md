@@ -33,7 +33,7 @@ Download `owendots-current.iso` from the same release as `install.sh` and copy
 it onto Ventoy. Boot that image, connect to the Internet and run as root:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/owenewans/owendots/2026.09.25-preview1/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/owenewans/owendots/2026.09.25-preview2/install.sh | bash
 ```
 
 The script downloads the compiled installer and its package bundle, checks a
@@ -219,8 +219,7 @@ BIOS/MBR with ext4 and UEFI/GPT with XFS have passed base installation and
 Limine disk boot. The UEFI test also passed DHCP, HTTPS, user password login
 and root key login. BIOS/F2FS passed disk boot, DHCP, zram and user locale checks.
 Container tests cover palette rejection, config backups, managed browser
-profiles and literal launch arguments. Kernel updates, booting through Ventoy and
-the remaining filesystem cases still need acceptance.
+profiles and literal launch arguments. Kernel updates and the remaining filesystem cases still need acceptance.
 
 The Niri desktop has opened Foot, htop and a Firefox HTTPS page in QEMU.
 Session tests cover compositor environment transfer and child cleanup in
@@ -231,12 +230,12 @@ Raygui controls, palette validation and editing, 125% scaling and display timeou
 rollback were exercised through QEMU keyboard/mouse input. Scroll cursor orientation, native Wayland controls and window focus bindings
 were checked in QEMU.
 
-The 2026.09.25-preview1 bundle passed fresh UEFI/GPT and BIOS/MBR ext4
+The 2026.09.25-preview2 bundle passed fresh UEFI/GPT and BIOS/MBR ext4
 installations through `install.sh`, including HTTPS download and pinned archive
 verification. Both booted from disk. A fresh UEFI installation then deployed
 all application choices through the TUI, configured its Slackware mirror and key,
-and passed executable/shared-library checks. The final ISO booted to its live
-root shell. Bootstrap failure tests run in Podman cover checksum rejection,
+and passed executable/shared-library checks. The final ISO booted through Ventoy 1.1.17 in UEFI normal mode, initialized
+its verified runtime and opened the disk TUI. Bootstrap failure tests run in Podman cover checksum rejection,
 download failure, existing destinations, archive traversal, symlinks and the
 live-environment guard. Manuals ship in the tarball, ISO and installed package.
 

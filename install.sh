@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-release=2026.09.25-preview1
+release=2026.09.25-preview2
 archive_sha256=004a42827c7f691824d6e93c9baa2b75462014805f631a039881bb27d25dd9fd
 archive_url="https://github.com/owenewans/owendots/releases/download/$release/owendots-x86_64.tar.xz"
 
