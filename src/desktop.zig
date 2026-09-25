@@ -15,7 +15,7 @@ fn user(c: Context) !void {
     if (std.mem.eql(u8, std.mem.trim(u8, try c.capture(&.{ "id", "-u" }), "\n"), "0")) return error.RunAsDesktopUser;
 }
 
-fn config(c: Context) ![]const u8 {
+pub fn config(c: Context) ![]const u8 {
     const path = if (c.env) |env| env.get("XDG_CONFIG_HOME") else null;
     const result = path orelse try c.fmt("{s}/.config", .{try c.environment("HOME")});
     if (!std.fs.path.isAbsolute(result)) return error.AbsoluteConfigPathRequired;
@@ -54,6 +54,7 @@ pub fn apply(c: Context) !void {
     const stage = try c.temp();
     defer c.run(&.{ "rm", "-rf", "--", stage }) catch {};
     try palette.generate(c, path, "/usr/share/owendots/templates", stage);
+    try @import("display.zig").append(c, root, stage);
     const selected = try choices(c);
     if (selected.compositor == .scroll) {
         const bar_path = try c.fmt("{s}/waybar/config.jsonc", .{stage});

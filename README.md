@@ -19,8 +19,10 @@ slackware-current installer and workstation configuration.
 - USB directory import with file modes, symlinks and renamed collision copies
 - application configuration templates generated from one palette
 - per-user application choices, managed browser profiles and original config backups
+- Zig/Raygui desktop controls and palette editor
+- monitor mode and scale selection with timed rollback
 
-Development is in progress. Desktop deployment and the Raygui control program
+Development is in progress. Desktop deployment and the full application set
 are unfinished. BIOS/ext4, BIOS/F2FS and UEFI/XFS base installs have booted in QEMU;
 the remaining acceptance scenarios are in progress. See
 [scope and acceptance requirements](SPEC.md).
@@ -82,6 +84,12 @@ Root can run `owendots display-manager` to enable Ly for the next boot.
 It reserves tty2 in runlevel 4, keeps other console logins and saves original
 system files under `/var/lib/owendots/backup/`. Ly uses Slackware's login PAM
 stack and offers installed owendots sessions.
+
+With the `owenctl` package installed, `owendots menu` opens the Raygui controls.
+Its palette page edits `palette.toml` and regenerates application configurations.
+`owendots display` lists compositor-reported modes and asks for the scale.
+Confirm within 15 seconds to keep the change; otherwise it restores the previous
+configuration. Settings survive palette regeneration in `display.json`.
 
 From the prepared live environment, start the installer as root:
 
@@ -157,6 +165,9 @@ Session tests cover compositor environment transfer and child cleanup in
 Slackware-current. Physical GPU, Bluetooth and modem checks remain outstanding.
 Ly login, logout, reboot to Ly and clipboard-history retention passed in the
 UEFI desktop VM. mpv rendered test video through virgl and opened PipeWire audio.
+Raygui controls, palette validation and editing, 125% scaling and display timeout
+rollback were exercised through QEMU keyboard/mouse input. Scroll still needs
+the corresponding desktop tests.
 
 ## license
 

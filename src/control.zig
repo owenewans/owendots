@@ -12,7 +12,7 @@ pub fn open(c: Context, panel: []const u8) !void {
     const selected = try desktop.choices(c);
     const app_id = if (selected.terminal == .foot) "--app-id=org.owendots.control" else "--class=org.owendots.control";
     if (same(panel, "network")) return c.run(&.{ @tagName(selected.terminal), app_id, "-e", "nmtui" });
-    if (!same(panel, "audio") and !same(panel, "bluetooth") and !same(panel, "power")) return error.UnknownControl;
+    if (!same(panel, "audio") and !same(panel, "bluetooth") and !same(panel, "power") and !same(panel, "display")) return error.UnknownControl;
     return c.run(&.{ @tagName(selected.terminal), app_id, "-e", "/usr/bin/owendots", "control", panel });
 }
 
@@ -91,6 +91,7 @@ pub fn validAddress(address: []const u8) bool {
 }
 
 pub fn run(c: Context, panel: []const u8) !void {
+    if (same(panel, "display")) return display(c);
     if (same(panel, "audio")) return audio(c);
     if (same(panel, "bluetooth")) return bluetooth(c);
     if (same(panel, "power")) {
@@ -103,6 +104,77 @@ pub fn run(c: Context, panel: []const u8) !void {
         return c.run(&.{ "loginctl", action });
     }
     return error.UnknownControl;
+}
+
+fn display(c: Context) !void {
+    const compositor = (try desktop.choices(c)).compositor;
+    const dump = try c.capture(if (compositor == .niri) &.{ "niri", "msg", "--json", "outputs" } else &.{ "swaymsg", "-t", "get_outputs", "-r" });
+    const value = (try std.json.parseFromSlice(std.json.Value, c.a, dump, .{})).value;
+    var outputs: std.ArrayList(std.json.Value) = .empty;
+    var items: std.ArrayList([]const u8) = .empty;
+    if (compositor == .niri and value == .object) {
+        var it = value.object.iterator();
+        while (it.next()) |entry| try outputs.append(c.a, entry.value_ptr.*);
+    } else if (value == .array) try outputs.appendSlice(c.a, value.array.items) else return error.InvalidDisplayInfo;
+    for (outputs.items) |output| {
+        if (output != .object) return error.InvalidDisplayInfo;
+        const name = output.object.get("name") orelse return error.InvalidDisplayInfo;
+        if (name != .string or !sys.safeName(name.string)) return error.InvalidOutputName;
+        try items.appendSlice(c.a, &.{ name.string, name.string });
+    }
+    if (items.items.len == 0) return error.NoDisplay;
+    const chosen = try tui.menu(c, "Monitor", items.items);
+    var modes: std.ArrayList(@import("display.zig").Settings) = .empty;
+    items.clearRetainingCapacity();
+    for (outputs.items) |output| {
+        if (!same(output.object.get("name").?.string, chosen)) continue;
+        const available = output.object.get("modes") orelse return error.InvalidDisplayInfo;
+        if (available != .array) return error.InvalidDisplayInfo;
+        for (available.array.items) |mode| {
+            if (mode != .object) return error.InvalidDisplayInfo;
+            const settings: @import("display.zig").Settings = .{
+                .output = chosen,
+                .width = try integer(mode, "width"),
+                .height = try integer(mode, "height"),
+                .refresh = try integer(mode, if (compositor == .niri) "refresh_rate" else "refresh"),
+                .scale = 100,
+            };
+            try items.appendSlice(c.a, &.{ try c.fmt("{d}", .{modes.items.len}), try settings.mode(c) });
+            try modes.append(c.a, settings);
+        }
+    }
+    if (modes.items.len == 0) return error.NoDisplayModes;
+    const index = try std.fmt.parseInt(usize, try tui.menu(c, "Resolution / refresh rate", items.items), 10);
+    if (index >= modes.items.len) return error.InvalidDisplayMode;
+    var settings = modes.items[index];
+    settings.scale = try std.fmt.parseInt(u16, try tui.input(c, "Scale percentage (50-400)", "100"), 10);
+    try settings.validate();
+    const path = try c.fmt("{s}/owendots/display.json", .{try desktop.config(c)});
+    const old = c.read(path) catch |err| switch (err) {
+        error.FileNotFound => null,
+        else => return err,
+    };
+    var keep = false;
+    defer if (!keep) {
+        if (old) |text| {
+            c.write(path, text) catch {};
+        } else {
+            c.run(&.{ "rm", "-f", "--", path }) catch {};
+        }
+        desktop.apply(c) catch {};
+        if (compositor == .scroll) c.run(&.{ "swaymsg", "reload" }) catch {};
+    };
+    try c.write(path, try std.json.Stringify.valueAlloc(c.a, settings, .{ .whitespace = .indent_2 }));
+    try desktop.apply(c);
+    if (compositor == .scroll) try c.run(&.{ "swaymsg", "reload" });
+    _ = try tui.dialog(c, &.{ "--timeout", "15", "--defaultno", "--yesno", "Keep this display mode?\nCancel or wait 15 seconds to restore the previous configuration.", "10", "76" });
+    keep = true;
+}
+
+fn integer(object: std.json.Value, key: []const u8) !u32 {
+    const value = object.object.get(key) orelse return error.InvalidDisplayInfo;
+    if (value != .integer or value.integer < 0 or value.integer > std.math.maxInt(u32)) return error.InvalidDisplayInfo;
+    return @intCast(value.integer);
 }
 
 pub fn service(c: Context, name: []const u8, action: []const u8) !void {

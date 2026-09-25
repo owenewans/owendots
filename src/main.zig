@@ -14,7 +14,7 @@ const login = @import("login.zig");
 
 fn execute(c: sys.Context, args: []const []const u8) !void {
     if (args.len == 1 or std.mem.eql(u8, args[1], "--help")) {
-        return c.print("owendots - Slackware workstation tools\n\nowendots theme generate PALETTE TEMPLATES OUTPUT\nowendots theme apply\nowendots configure\nowendots launch terminal|browser|files|telegram|monitor|editor [ARGS...]\nowendots screenshot|clipboard\nowendots install MEDIA_DIRECTORY (live environment only)\n", .{});
+        return c.print("owendots - Slackware workstation tools\n\nowendots theme generate PALETTE TEMPLATES OUTPUT\nowendots theme apply\nowendots configure\nowendots launch terminal|browser|files|telegram|monitor|editor [ARGS...]\nowendots menu\nowendots network|audio|bluetooth|display|power\nowendots session niri|scroll\nowendots desktop-system|display-manager (root)\nowendots screenshot|clipboard\nowendots install MEDIA_DIRECTORY (live environment only)\n", .{});
     }
     if (args.len == 7 and std.mem.eql(u8, args[1], "theme") and std.mem.eql(u8, args[2], "generate")) return error.TooManyArguments;
     if (args.len == 6 and std.mem.eql(u8, args[1], "theme") and std.mem.eql(u8, args[2], "generate")) {
@@ -23,10 +23,11 @@ fn execute(c: sys.Context, args: []const []const u8) !void {
     if (args.len == 3 and std.mem.eql(u8, args[1], "install")) return installer.start(c, args[2]);
     if (args.len == 3 and std.mem.eql(u8, args[1], "theme") and std.mem.eql(u8, args[2], "apply")) return desktop.apply(c);
     if (args.len == 2 and std.mem.eql(u8, args[1], "configure")) return desktop.configure(c);
+    if (args.len == 2 and std.mem.eql(u8, args[1], "menu")) return c.run(&.{"/usr/bin/owenctl"});
     if (args.len >= 3 and std.mem.eql(u8, args[1], "launch")) return desktop.launch(c, args[2], args[3..]);
     if (args.len == 2 and std.mem.eql(u8, args[1], "screenshot")) return desktop.screenshot(c);
     if (args.len == 2 and std.mem.eql(u8, args[1], "clipboard")) return desktop.clipboard(c);
-    if (args.len == 2 and (std.mem.eql(u8, args[1], "network") or std.mem.eql(u8, args[1], "audio") or std.mem.eql(u8, args[1], "bluetooth") or std.mem.eql(u8, args[1], "power"))) return control.open(c, args[1]);
+    if (args.len == 2 and (std.mem.eql(u8, args[1], "network") or std.mem.eql(u8, args[1], "audio") or std.mem.eql(u8, args[1], "bluetooth") or std.mem.eql(u8, args[1], "power") or std.mem.eql(u8, args[1], "display"))) return control.open(c, args[1]);
     if (args.len == 3 and std.mem.eql(u8, args[1], "control")) return control.run(c, args[2]);
     if (args.len == 4 and std.mem.eql(u8, args[1], "service")) return control.service(c, args[2], args[3]);
     if (args.len == 2 and std.mem.eql(u8, args[1], "desktop-system")) return system.desktop(c);
@@ -62,4 +63,5 @@ test {
     std.testing.refAllDecls(desktop);
     std.testing.refAllDecls(control);
     std.testing.refAllDecls(login);
+    std.testing.refAllDecls(@import("display.zig"));
 }

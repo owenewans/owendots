@@ -48,6 +48,18 @@ with tempfile.TemporaryDirectory(prefix='owendots-desktop-') as directory:
     run('theme', 'apply')
     assert (config / 'owendots/backup/foot/foot.ini').read_text() == 'original terminal configuration\n'
 
+    display = config / 'owendots/display.json'
+    settings = dict(output='DP-1', width=1920, height=1080, refresh=59940, scale=125)
+    display.write_text(json.dumps(settings))
+    run('theme', 'apply')
+    assert 'mode "1920x1080@59.940"' in (config / 'niri/config.kdl').read_text()
+    assert 'output DP-1 mode 1920x1080@59.940Hz scale 1.25' in (config / 'scroll/config').read_text()
+    before = (config / 'niri/config.kdl').read_text()
+    display.write_text(json.dumps(dict(settings, output='DP-1; exec id')))
+    run('theme', 'apply', ok=False)
+    assert (config / 'niri/config.kdl').read_text() == before
+    display.unlink()
+
     binaries = root / 'bin'
     binaries.mkdir()
     for program in ['foot', 'firefox']:
