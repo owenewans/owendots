@@ -2,6 +2,7 @@ set -gx EDITOR micro
 set -gx LANG en_US.UTF-8
 set -gx TZ UTC
 set -gx VISUAL micro
+fish_add_path --path --append /usr/local/sbin /usr/sbin /sbin
 if status is-interactive
     set -g fish_greeting
     set -g fish_color_normal '{{foreground}}'
