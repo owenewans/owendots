@@ -94,7 +94,7 @@ fn entry(out: *std.Io.Writer, title: []const u8, uuid: []const u8, version: []co
         \\    protocol: linux
         \\    path: boot():/owendots/vmlinuz-{s}
         \\    module_path: boot():/owendots/initramfs-{s}.img
-        \\    cmdline: root=UUID={s} rw
+        \\    cmdline: root=UUID={s} rw consoleblank=0
         \\
         \\
     , .{ title, version, version, uuid });

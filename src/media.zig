@@ -7,7 +7,7 @@ pub const Package = struct {
     name: []const u8,
     file: []const u8,
     sha256: []const u8,
-    source: []const u8,
+    source: ?[]const u8,
     role: enum { base, desktop },
 };
 pub const Manifest = struct {
@@ -29,8 +29,10 @@ pub fn parse(c: Context, text: []const u8) !Manifest {
         if (!std.mem.startsWith(u8, pkg.file, try c.fmt("{s}-", .{pkg.name}))) return error.PackageNameMismatch;
         if (pkg.sha256.len != 64) return error.InvalidChecksum;
         for (pkg.sha256) |ch| if (!std.ascii.isHex(ch)) return error.InvalidChecksum;
-        if (!std.mem.startsWith(u8, pkg.source, "https://")) return error.HttpsRequired;
-        for (pkg.source) |ch| if (ch <= 32 or ch == 127) return error.InvalidSourceUrl;
+        if (pkg.source) |url| {
+            if (!std.mem.startsWith(u8, url, "https://")) return error.HttpsRequired;
+            for (url) |ch| if (ch <= 32 or ch == 127) return error.InvalidSourceUrl;
+        }
         for (manifest.packages[0..index]) |other| {
             if (std.mem.eql(u8, pkg.name, other.name) or std.mem.eql(u8, pkg.file, other.file)) return error.DuplicatePackage;
         }
@@ -49,11 +51,12 @@ pub fn prepare(c: Context, medium: []const u8, cache: []const u8) !Prepared {
             else => return err,
         };
         if (existing == null) {
-            const answer = try tui.menu(c, try c.fmt("Missing USB package: {s}\nDownload from {s}?", .{ pkg.file, pkg.source }), &.{ "download", "Download this exact package", "cancel", "Cancel installation" });
+            const url = pkg.source orelse return error.MissingLocalOnlyPackage;
+            const answer = try tui.menu(c, try c.fmt("Missing USB package: {s}\nDownload from {s}?", .{ pkg.file, url }), &.{ "download", "Download this exact package", "cancel", "Cancel installation" });
             if (!std.mem.eql(u8, answer, "download")) return error.Cancelled;
             try std.Io.Dir.cwd().createDirPath(c.io, cache);
             path = try c.fmt("{s}/{s}", .{ cache, pkg.file });
-            try c.download(pkg.source, path);
+            try c.download(url, path);
         } else if (existing.?.kind != .file) return error.PackageMustBeFile;
         if (!std.ascii.eqlIgnoreCase(try c.checksum(path), pkg.sha256)) return error.PackageChecksumMismatch;
         try paths.append(c.a, path);

@@ -33,6 +33,9 @@ fn disks(c: Context) ![]Disk {
     var result: std.ArrayList(Disk) = .empty;
     for (devices.array.items) |item| {
         if (!same(jsonText(item, "type"), "disk")) continue;
+        const path = jsonText(item, "path");
+        if (std.mem.startsWith(u8, path, "/dev/zram") or std.mem.startsWith(u8, path, "/dev/ram") or std.mem.startsWith(u8, path, "/dev/fd")) continue;
+        if (try jsonNumber(item, "size") < 4 * 1024 * 1024 * 1024) continue;
         const ro = item.object.get("ro") orelse return error.InvalidDiskMetadata;
         if (ro == .bool and ro.bool) continue;
         if (ro == .integer and ro.integer != 0) continue;
@@ -71,8 +74,11 @@ fn layout(c: Context, disk: Disk, firmware: storage.Firmware) !storage.Layout {
         for (partitions.items, 1..) |part, i| try description.writer.print("{d}: {s} {s}, start {d} MiB, size {d} MiB\n", .{ i, part.mount, @tagName(part.filesystem), part.start_mib, part.size_mib });
         const action = try tui.menu(c, description.written(), &.{ "add", "Add a partition with explicit offsets", "remove", "Remove one planned partition", "done", "Validate this layout" });
         if (same(action, "done")) {
-            const result: storage.Layout = .{ .disk = disk.path, .bytes = disk.bytes, .sector_size = disk.sector, .firmware = firmware, .partitions = try partitions.toOwnedSlice(c.a) };
-            try result.validate();
+            const result: storage.Layout = .{ .disk = disk.path, .bytes = disk.bytes, .sector_size = disk.sector, .firmware = firmware, .partitions = partitions.items };
+            result.validate() catch |err| {
+                _ = try tui.dialog(c, &.{ "--msgbox", try c.fmt("Invalid layout: {s}\nAdjust the planned partitions.", .{@errorName(err)}), "10", "72" });
+                continue;
+            };
             return result;
         }
         if (same(action, "remove")) {
@@ -101,8 +107,7 @@ fn users(c: Context) ![]User {
         while (true) {
             const path = try tui.input(c, "Private SSH key on USB (empty to finish key selection)", "");
             if (path.len == 0) break;
-            const stat = try std.Io.Dir.cwd().statFile(c.io, path, .{ .follow_symlinks = false });
-            if (stat.kind != .file) return error.InvalidPrivateKeyFile;
+            try data.validateKey(c, path);
             try keys.append(c.a, try c.absolute(path));
         }
         const source = try tui.input(c, "USB directory to copy into ~/Data/usb (empty to skip)", "");
@@ -178,7 +183,9 @@ fn execute(c: Context, disk: Disk, plan: storage.Layout, packages: media.Prepare
             try c.run(&.{ "installpkg", "--root", target, path });
         } else try c.run(&.{ "cp", "--", path, try c.fmt("{s}/{s}", .{ cache, pkg.file }) });
     }
+    try c.write(try c.fmt("{s}/var/lib/owendots/media.json", .{target}), try std.json.Stringify.valueAlloc(c.a, packages.manifest, .{ .whitespace = .indent_2 }));
     try c.run(&.{ "chroot", target, "/sbin/ldconfig" });
+    try c.run(&.{ "chroot", target, "/usr/sbin/update-ca-certificates" });
     try system.configure(c, target, .{ .hostname = hostname, .ssh = ssh, .mounts = mounts.items });
     try system.password(c, target, "root", root_secret);
     try c.write(try c.fmt("{s}/etc/doas.conf", .{target}), if (persist_minutes == 0) "permit :wheel\n" else "permit persist :wheel\n");
@@ -208,7 +215,7 @@ pub fn start(c: Context, medium: []const u8) !void {
     const work = try c.temp();
     defer std.Io.Dir.cwd().deleteTree(c.io, work) catch {};
     const packages = try media.prepare(c, medium, try c.fmt("{s}/packages", .{work}));
-    for ([_][]const u8{ "aaa_base", "pkgtools", "kernel-generic", "mkinitrd", "fish", "owendoas", "limine", "owendots" }) |required| {
+    for ([_][]const u8{ "aaa_base", "pkgtools", "kernel-generic", "mkinitrd", "fish", "owendoas", "limine", "owendots", "holypkg", "network-scripts", "hostname", "mozilla-nss" }) |required| {
         var found = false;
         for (packages.manifest.packages) |pkg| if (same(pkg.name, required) and pkg.role == .base) {
             found = true;
@@ -241,6 +248,7 @@ pub fn start(c: Context, medium: []const u8) !void {
     if (persist > 1440) return error.InvalidPersistDuration;
     var review: std.Io.Writer.Allocating = .init(c.a);
     try review.writer.print("ERASE {s}\nModel: {s}\nSerial: {s}\nBytes: {d}\n\n{s}\nHostname: {s}\nUTC / en_US.UTF-8\nRoot password: set\nSSH: {s}\ndoas cache: {d} minutes\n\n", .{ disk.path, disk.model, disk.serial, disk.bytes, try plan.script(c.a), hostname, @tagName(ssh), persist });
+    try review.writer.print("Existing partitions:\n{s}\nPlanned filesystems:\n", .{try c.capture(&.{ "lsblk", "--output", "PATH,SIZE,TYPE,FSTYPE,MOUNTPOINTS", disk.path })});
     for (plan.partitions) |part| try review.writer.print("Format {s}: {s}, start {d} MiB, size {d} MiB\n", .{ part.mount, @tagName(part.filesystem), part.start_mib, part.size_mib });
     for (accounts) |user| {
         try review.writer.print("\nUser: {s}, wheel: {}, password: set\nUSB data: {s}\n", .{ user.name, user.wheel, user.usb orelse "none" });

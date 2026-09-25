@@ -47,7 +47,7 @@ pub fn importFiles(c: Context, input: []const u8, home: []const u8, uid: u32, gi
     try c.run(&.{ "chown", try c.fmt("{d}:{d}", .{ uid, gid }), "--", data, output });
 }
 
-pub fn importKey(c: Context, input: []const u8, home: []const u8, uid: u32, gid: u32) !void {
+pub fn validateKey(c: Context, input: []const u8) !void {
     const stat = try std.Io.Dir.cwd().statFile(c.io, input, .{ .follow_symlinks = false });
     if (stat.kind != .file or stat.size > 1024 * 1024) return error.InvalidPrivateKeyFile;
     const contents = try c.read(input);
@@ -56,6 +56,11 @@ pub fn importKey(c: Context, input: []const u8, home: []const u8, uid: u32, gid:
     if (!std.mem.startsWith(u8, header, "-----BEGIN ") or std.mem.indexOf(u8, header, "PRIVATE KEY-----") == null) return error.InvalidPrivateKeyFile;
     const name = std.fs.path.basename(input);
     if (!sys.safeName(name)) return error.InvalidKeyFilename;
+}
+
+pub fn importKey(c: Context, input: []const u8, home: []const u8, uid: u32, gid: u32) !void {
+    try validateKey(c, input);
+    const name = std.fs.path.basename(input);
     const ssh = try c.fmt("{s}/.ssh", .{try c.absolute(home)});
     try directory(c, ssh);
     try c.run(&.{ "chmod", "0700", ssh });

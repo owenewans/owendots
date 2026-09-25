@@ -54,7 +54,7 @@ pub fn fstab(a: std.mem.Allocator, mounts: []const Mount) ![]const u8 {
         try out.writer.print("UUID={s} {s} {s} {s} 0 {d}\n", .{ mount.uuid, mount.path, fs, options, pass });
     }
     if (!root) return error.MissingRoot;
-    try out.writer.writeAll("devpts /dev/pts devpts gid=5,mode=620 0 0\nproc /proc proc defaults 0 0\nsysfs /sys sysfs defaults 0 0\n");
+    try out.writer.writeAll("devpts /dev/pts devpts gid=5,mode=620 0 0\nproc /proc proc defaults 0 0\nsysfs /sys sysfs defaults 0 0\ntmpfs /dev/shm tmpfs defaults,nosuid,nodev 0 0\n");
     return out.toOwnedSlice();
 }
 
@@ -69,9 +69,11 @@ pub fn configure(c: Context, target: []const u8, config: Config) !void {
     try c.write(try c.fmt("{s}/etc/hosts", .{root}), try c.fmt("127.0.0.1 localhost\n::1 localhost\n127.0.1.1 {s} {s}\n", .{ config.hostname, short }));
     try c.write(try c.fmt("{s}/etc/profile.d/lang.sh", .{root}), "export LANG=en_US.UTF-8\n");
     try c.write(try c.fmt("{s}/etc/profile.d/lang.csh", .{root}), "setenv LANG en_US.UTF-8\n");
+    try c.write(try c.fmt("{s}/etc/environment", .{root}), "LANG=en_US.UTF-8\nTZ=UTC\n");
+    try c.write(try c.fmt("{s}/etc/fish/conf.d/00-owendots.fish", .{root}), "set -gx LANG en_US.UTF-8\nset -gx TZ UTC\n");
     try c.write(try c.fmt("{s}/etc/hardwareclock", .{root}), "UTC\n");
     try c.run(&.{ "ln", "-sfn", "../usr/share/zoneinfo/UTC", try c.fmt("{s}/etc/localtime", .{root}) });
-    try c.write(try c.fmt("{s}/etc/ssh/sshd_config.d/owendots.conf", .{root}), try c.fmt("PermitRootLogin prohibit-password\nPubkeyAuthentication yes\nPasswordAuthentication {s}\nKbdInteractiveAuthentication no\n", .{if (config.ssh == .passwords) "yes" else "no"}));
+    try c.write(try c.fmt("{s}/etc/ssh/sshd_config.d/owendots.conf", .{root}), try c.fmt("PermitRootLogin prohibit-password\nPubkeyAuthentication yes\nSetEnv LANG=en_US.UTF-8 TZ=UTC\nPasswordAuthentication {s}\nKbdInteractiveAuthentication no\n", .{if (config.ssh == .passwords) "yes" else "no"}));
     // Slackware's default file does not consistently include a drop-in directory.
     const ssh_path = try c.fmt("{s}/etc/ssh/sshd_config", .{root});
     const ssh_config = c.read(ssh_path) catch |err| switch (err) {
@@ -81,7 +83,7 @@ pub fn configure(c: Context, target: []const u8, config: Config) !void {
     if (std.mem.indexOf(u8, ssh_config, "Include /etc/ssh/sshd_config.d/owendots.conf") == null) {
         try c.write(ssh_path, try c.fmt("Include /etc/ssh/sshd_config.d/owendots.conf\n{s}", .{ssh_config}));
     }
-    const services = [_]struct { []const u8, bool }{ .{ "rc.NetworkManager", true }, .{ "rc.messagebus", true }, .{ "rc.sshd", config.ssh != .disabled }, .{ "rc.bluetooth", config.bluetooth }, .{ "rc.inet1", false }, .{ "rc.wireless", false } };
+    const services = [_]struct { []const u8, bool }{ .{ "rc.networkmanager", true }, .{ "rc.messagebus", true }, .{ "rc.sshd", config.ssh != .disabled }, .{ "rc.bluetooth", config.bluetooth }, .{ "rc.inet1", true }, .{ "rc.wireless", false } };
     for (services) |service| {
         const path = try c.fmt("{s}/etc/rc.d/{s}", .{ root, service[0] });
         const file = std.Io.Dir.cwd().openFile(c.io, path, .{}) catch |err| switch (err) {
@@ -91,42 +93,16 @@ pub fn configure(c: Context, target: []const u8, config: Config) !void {
         file.close(c.io);
         try c.run(&.{ "chmod", if (service[1]) "0755" else "0644", path });
     }
-    const zram_path = try c.fmt("{s}/etc/rc.d/rc.owendots", .{root});
-    try c.write(zram_path, zram_service);
-    try c.run(&.{ "chmod", "0755", zram_path });
-    for ([_]struct { file: []const u8, action: []const u8 }{ .{ .file = "rc.local", .action = "start" }, .{ .file = "rc.local_shutdown", .action = "stop" } }) |hook| {
-        const path = try c.fmt("{s}/etc/rc.d/{s}", .{ root, hook.file });
-        const old = c.read(path) catch |err| switch (err) {
-            error.FileNotFound => "#!/bin/sh\n",
-            else => return err,
-        };
-        if (std.mem.indexOf(u8, old, "/etc/rc.d/rc.owendots") == null) {
-            try c.write(path, try c.fmt("{s}\nif [ -x /etc/rc.d/rc.owendots ]; then\n  /etc/rc.d/rc.owendots {s}\nfi\n", .{ old, hook.action }));
-        }
-        try c.run(&.{ "chmod", "0755", path });
-    }
+    try c.write(try c.fmt("{s}/etc/default/zram", .{root}),
+        \\ZRAM_ENABLE=1
+        \\ZRAMSIZE=$(awk '/^MemTotal:/ { n=int($2/2); if (n>8388608) n=8388608; printf "%.0f", n }' /proc/meminfo)
+        \\ZRAMNUMBER=1
+        \\ZRAMCOMPRESSION=zstd
+        \\ZRAMPRIORITY=100
+        \\
+    );
+    try c.write(try c.fmt("{s}/etc/NetworkManager/conf.d/90-owendots.conf", .{root}), "[main]\ndhcp=internal\n");
 }
-
-const zram_service =
-    \\#!/bin/sh
-    \\set -eu
-    \\case "${1:-start}" in
-    \\  start)
-    \\    if swapon --noheadings --raw --show=NAME | grep -qx /dev/zram0; then exit 0; fi
-    \\    modprobe zram num_devices=1
-    \\    size=$(awk '/^MemTotal:/ { n=int($2*512); if (n>8589934592) n=8589934592; printf "%.0f", n }' /proc/meminfo)
-    \\    zramctl /dev/zram0 --algorithm zstd --size "$size"
-    \\    mkswap /dev/zram0
-    \\    swapon --priority 100 /dev/zram0
-    \\    ;;
-    \\  stop)
-    \\    if swapon --noheadings --raw --show=NAME | grep -qx /dev/zram0; then swapoff /dev/zram0; fi
-    \\    if [ -b /dev/zram0 ]; then zramctl --reset /dev/zram0; fi
-    \\    ;;
-    \\  *) exit 2 ;;
-    \\esac
-    \\
-;
 
 pub fn password(c: Context, target: []const u8, user: []const u8, secret: []const u8) !void {
     if (!std.mem.eql(u8, user, "root") and !validUser(user)) return error.InvalidUsername;
@@ -173,7 +149,7 @@ test "target configuration is repeatable and retains SSH root key access" {
     const c: Context = .{ .a = arena.allocator(), .io = std.testing.io };
     const root = try c.temp();
     defer std.Io.Dir.cwd().deleteTree(c.io, root) catch {};
-    for ([_][]const u8{ "rc.NetworkManager", "rc.messagebus", "rc.sshd", "rc.bluetooth", "rc.inet1" }) |name| {
+    for ([_][]const u8{ "rc.networkmanager", "rc.messagebus", "rc.sshd", "rc.bluetooth", "rc.inet1" }) |name| {
         try c.write(try c.fmt("{s}/etc/rc.d/{s}", .{ root, name }), "#!/bin/sh\n");
     }
     const config: Config = .{ .hostname = "x99.owenewans.org", .ssh = .keys, .mounts = &.{ .{ .uuid = "abc-123", .path = "/", .filesystem = .ext4 }, .{ .uuid = "def-456", .path = "/boot/limine", .filesystem = .fat32 } } };
@@ -184,7 +160,7 @@ test "target configuration is repeatable and retains SSH root key access" {
     const policy = try c.read(try c.fmt("{s}/etc/ssh/sshd_config.d/owendots.conf", .{root}));
     try std.testing.expect(std.mem.indexOf(u8, policy, "PermitRootLogin prohibit-password") != null);
     try std.testing.expect(std.mem.indexOf(u8, policy, "PasswordAuthentication no") != null);
-    try std.testing.expectEqualStrings("755", std.mem.trim(u8, try c.capture(&.{ "stat", "-c", "%a", try c.fmt("{s}/etc/rc.d/rc.NetworkManager", .{root}) }), "\n"));
+    try std.testing.expectEqualStrings("755", std.mem.trim(u8, try c.capture(&.{ "stat", "-c", "%a", try c.fmt("{s}/etc/rc.d/rc.networkmanager", .{root}) }), "\n"));
     try std.testing.expectEqualStrings("644", std.mem.trim(u8, try c.capture(&.{ "stat", "-c", "%a", try c.fmt("{s}/etc/rc.d/rc.bluetooth", .{root}) }), "\n"));
     try std.testing.expectError(error.TargetIsHostRoot, configure(c, "/", config));
 }

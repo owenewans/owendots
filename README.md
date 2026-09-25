@@ -20,7 +20,8 @@ slackware-current installer and workstation configuration.
 - application configuration templates generated from one palette
 
 Development is in progress. Desktop deployment and the Raygui control program
-are unfinished; QEMU installation and boot acceptance remain pending. See
+are unfinished. BIOS/ext4 and UEFI/XFS base installs have booted in QEMU;
+the remaining acceptance scenarios are in progress. See
 [scope and acceptance requirements](SPEC.md).
 
 ## build
@@ -71,7 +72,23 @@ It creates a package directory, not a bootable ISO.
 
 Supply native packages with `--native-manifest`: a JSON list beside the package
 files, with `name`, `file`, `sha256`, `source` and `role` (`base` or `desktop`).
-Use the published HTTPS download URL for `source`.
+Use the published HTTPS download URL for `source`, or `null` for a local-only
+package. Missing local-only packages stop installation.
+
+Assemble the ISO from the matching current installer kernel/initrd and Limine
+binary release directory:
+
+```sh
+python3 tools/iso.py --media ./media --live-base ./live-base \
+  --limine ./limine-binary --binary zig-out/bin/owendots \
+  --work ./iso-work --output ./owendots.iso
+```
+
+`live-base` contains `initrd.img` from `isolinux/initrd.img` and `vmlinuz` from
+`kernels/generic.s/bzImage` on the same current mirror. The builder verifies
+both against the signed media checksums. It requires `bsdtar`, `xz`, GnuPG and
+`xorriso`, and writes an image file without mounting host disks. Use
+`--serial-console` to select the serial boot entry for QEMU tests.
 
 Build recipes and foreign package conversion live in
 [holypkg](https://github.com/owenewans/holypkg). Installed packages remain under
@@ -92,7 +109,10 @@ The installer copies the kernel and initramfs to FAT for Limine. See
 
 Module tests have passed in Slackware-current under Podman, including manual
 layouts, media checks, repeated target configuration and USB copy behaviour.
-Boot, desktop and kernel update acceptance will be recorded after QEMU tests.
+BIOS/MBR with ext4 and UEFI/GPT with XFS have passed base installation and
+Limine disk boot. The UEFI test also passed DHCP, HTTPS, user password login
+and root key login. Desktop, kernel updates, Ventoy and the remaining
+filesystem cases still need acceptance.
 
 ## license
 

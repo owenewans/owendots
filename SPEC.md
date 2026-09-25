@@ -61,5 +61,28 @@ physical RTX 3050, modem or Bluetooth correctness.
 - owenewans/owenslackinstall: 851e11eedfec387a01ea2172d25e7e6ff4008976
 - Ghostty supports app-notifications=false; this does not remove GTK libraries.
 - Current OpenDoas PAM code hardcodes persist to 300 seconds; configurable
-  duration needs an audited native patch, not a nopass workaround.
+  duration uses our native OpenDoas patch, with expiry and file-safety tests.
 - Limine reads FAT12/16/32 and ISO9660. Do not put its Linux boot assets on ext4.
+
+## Validation checkpoint, 2026-09-25
+
+| scenario | evidence |
+| --- | --- |
+| module tests | 11 passed in Slackware-current under Podman |
+| BIOS/MBR, ext4 root and home | installation completed in 256.4 s; Limine disk boot and root console login passed |
+| UEFI/GPT, XFS root and ext4 home | installation completed in 274.8 s; ISO and installed ESP boot passed |
+| fresh UEFI networking | NetworkManager DHCP, HTTPS, hostname and shared-memory mount passed |
+| accounts | Fish user login, wheel membership and doas password reuse passed |
+| native packages | [GitHub CI](https://github.com/owenewans/holypkg/actions/runs/36089550710) passed RPM verification, doas cache tests and Limine build |
+
+The first BIOS test exposed missing base libraries and network startup files.
+Those packages were added before the clean UEFI test. QEMU tests add a serial
+getty and serial kernel console for observation. The firmware boots Limine
+from the installed disk during the boot check.
+
+`tests/vm.py` drives the real TUI over a QEMU UNIX serial socket. It requires a
+32 GiB disposable `/dev/vda` and the explicit `--erase-qemu-vda` flag. Its
+root/root and owenewans/owenewans credentials are test fixtures only.
+
+F2FS, the rest of the firmware/filesystem matrix, Ventoy, desktop sessions,
+kernel updates and the two final interactive VM windows remain open.
