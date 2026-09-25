@@ -16,7 +16,7 @@ with tempfile.TemporaryDirectory(prefix='owendots-desktop-') as directory:
     (config / 'foot/foot.ini').write_text('original terminal configuration\n')
     (config / 'owendots/apps.json').write_text(json.dumps(dict(
         terminal='foot', browser='firefox', telegram='tele', compositor='scroll')))
-    env = dict(os.environ, XDG_CONFIG_HOME=str(config))
+    env = dict(os.environ, XDG_CONFIG_HOME=str(config), XDG_DATA_HOME=str(root / "data"))
 
     def run(*args, ok=True):
         result = subprocess.run(['owendots', *args], env=env, capture_output=True, text=True)
@@ -28,6 +28,7 @@ with tempfile.TemporaryDirectory(prefix='owendots-desktop-') as directory:
     assert 'sway/workspaces' in (config / 'waybar/config.jsonc').read_text()
     assert 'niri/workspaces' in (config / 'waybar/niri.jsonc').read_text()
     assert 'sway/workspaces' in (config / 'waybar/scroll.jsonc').read_text()
+    assert 'Exec=owendots browser firefox %U' in (root / 'data/applications/firefox.desktop').read_text()
     assert not (config / 'firefox').exists()
     assert (config / 'owendots/firefox/chrome/userChrome.css').is_file()
     assert (config / 'owendots/palemoon/user.js').is_file()

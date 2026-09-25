@@ -62,7 +62,7 @@ fn style(editor: *const Editor) void {
         .{ r.BORDER_COLOR_PRESSED, accent }, .{ r.BASE_COLOR_PRESSED, accent },     .{ r.TEXT_COLOR_PRESSED, background },
         .{ r.BACKGROUND_COLOR, background }, .{ r.LINE_COLOR, border },
     }) |item| r.GuiSetStyle(r.DEFAULT, item[0], @bitCast(@as(u32, @bitCast(r.ColorToInt(item[1])))));
-    r.GuiSetStyle(r.DEFAULT, r.TEXT_SIZE, 17);
+    r.GuiSetStyle(r.DEFAULT, r.TEXT_SIZE, 20);
     r.GuiSetStyle(r.DEFAULT, r.TEXT_SPACING, 0);
     r.GuiSetStyle(r.DEFAULT, r.BORDER_WIDTH, 1);
 }
@@ -96,17 +96,30 @@ pub fn main(init: std.process.Init) !void {
     r.SetWindowMinSize(720, 580);
     r.SetTargetFPS(30);
     const font_path = "/usr/share/fonts/TTF/JetBrainsMonoNerdFontMono-Regular.ttf";
-    const font = if (r.FileExists(font_path)) r.LoadFontEx(font_path, 20, null, 0) else r.GetFontDefault();
+    var font_scale = r.GetWindowScaleDPI().x;
+    var font = if (r.FileExists(font_path)) r.LoadFontEx(font_path, @intFromFloat(@round(20 * font_scale)), null, 0) else r.GetFontDefault();
+    r.SetTextureFilter(font.texture, r.TEXTURE_FILTER_BILINEAR);
     defer if (r.FileExists(font_path)) r.UnloadFont(font);
     r.GuiSetFont(font);
     var labels: [palette.keys.len][:0]const u8 = undefined;
     for (palette.keys, 0..) |key, i| labels[i] = try c.a.dupeZ(u8, key);
+    const color_names = try c.a.dupeZ(u8, try std.mem.join(c.a, ";", &palette.keys));
+    var color_index: c_int = 0;
+    var color_scroll: c_int = 0;
     var page: enum { home, colors, keys } = .home;
     var status: [256:0]u8 = @splat(0);
     while (!r.WindowShouldClose()) {
         var child_status: c_int = 0;
         while (r.waitpid(-1, &child_status, r.WNOHANG) > 0) {
             if (child_status != 0) message(&status, "Command failed; see the session log.");
+        }
+        const scale = r.GetWindowScaleDPI().x;
+        if (scale != font_scale and r.FileExists(font_path)) {
+            r.UnloadFont(font);
+            font = r.LoadFontEx(font_path, @intFromFloat(@round(20 * scale)), null, 0);
+            r.SetTextureFilter(font.texture, r.TEXTURE_FILTER_BILINEAR);
+            r.GuiSetFont(font);
+            font_scale = scale;
         }
         style(&editor);
         r.BeginDrawing();
@@ -145,14 +158,16 @@ pub fn main(init: std.process.Init) !void {
                 }
             },
             .colors => {
-                const column = (width - 190) / 2;
-                for (labels, 0..) |key, i| {
-                    const x = 174 + @as(f32, @floatFromInt(i / 11)) * column;
-                    const y = 60 + @as(f32, @floatFromInt(i % 11)) * 38;
-                    _ = r.GuiLabel(rect(x, y, column - 114, 30), key);
-                    if (r.GuiTextBox(rect(x + column - 114, y, 98, 30), &editor.values[i], 9, editor.active == i) != 0) editor.active = if (editor.active == i) null else i;
-                }
-                if (button(174, 494, 160, "apply palette")) {
+                _ = r.GuiListView(rect(174, 60, 190, height - 150), color_names, &color_scroll, &color_index);
+                if (color_index < 0) color_index = 0;
+                const index: usize = @intCast(color_index);
+                var color = try editor.color(index);
+                const picker_width = @min(width - 430, 330);
+                _ = r.GuiLabel(rect(390, 60, picker_width, 30), labels[index]);
+                _ = r.GuiColorPicker(rect(390, 108, picker_width, 260), null, &color);
+                _ = try std.fmt.bufPrintZ(&editor.values[index], "#{x:0>2}{x:0>2}{x:0>2}", .{ color.r, color.g, color.b });
+                r.DrawRectangleRec(rect(390, 398, picker_width, 42), color);
+                if (button(174, height - 90, 160, "apply palette")) {
                     editor.save(c, path) catch |err| {
                         message(&status, @errorName(err));
                         r.EndMode2D();
@@ -161,11 +176,15 @@ pub fn main(init: std.process.Init) !void {
                     };
                     message(&status, "Saved. Restart applications to reload colors.");
                 }
-                if (button(350, 494, 140, "reload file")) editor.load(c, path) catch |err| message(&status, @errorName(err));
+                if (button(510, height - 90, 180, "login / boot")) {
+                    const selected = try desktop.choices(c);
+                    spawn(c, &.{ @tagName(selected.terminal), "-e", "owendots", "theme", "system" }) catch |err| message(&status, @errorName(err));
+                }
+                if (button(350, height - 90, 140, "reload file")) editor.load(c, path) catch |err| message(&status, @errorName(err));
             },
             .keys => {
-                const keys = [_][:0]const u8{ "Super+Return  terminal", "Super+D       launcher", "Super+Shift+E files", "Super+Shift+B browser", "Super+Q       close window", "Super+Comma   settings", "Print         region to clipboard", "Super+Shift+V clipboard history", "Caps Lock     US / RU", "Super+Shift+Q end session" };
-                for (keys, 0..) |key, i| _ = r.GuiLabel(rect(174, 60 + @as(f32, @floatFromInt(i)) * 36, width - 194, 30), key);
+                const keys = [_][:0]const u8{ "Super+Return  terminal", "Super+Space   launcher", "Super+PgUp/Dn workspaces", "Super+Wheel   workspaces", "Super+Arrows  windows", "Super+Shift+Wheel windows", "Super+Shift+E files", "Super+Shift+B browser", "Super+Q       close window", "Super+Comma   settings", "Print         region to clipboard", "Super+Shift+V clipboard history", "Caps Lock     US / RU", "Super+Shift+Q end session" };
+                for (keys, 0..) |key, i| _ = r.GuiLabel(rect(174, 60 + @as(f32, @floatFromInt(i)) * 30, width - 194, 28), key);
             },
         }
         _ = r.GuiLabel(rect(174, height - 58, width - 194, 36), &status);

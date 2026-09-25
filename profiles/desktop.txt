@@ -166,3 +166,4 @@ libei
 libdecor
 xkbcomp
 libxkbfile
+adwaita-icon-theme

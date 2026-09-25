@@ -77,7 +77,7 @@ pub fn apply(c: Context) !void {
     var paths = std.mem.splitScalar(u8, files, 0);
     while (paths.next()) |relative| {
         if (relative.len == 0) continue;
-        if (std.mem.startsWith(u8, relative, "firefox/") or std.mem.startsWith(u8, relative, "palemoon/")) continue;
+        if (std.mem.startsWith(u8, relative, "system/") or std.mem.startsWith(u8, relative, "firefox/") or std.mem.startsWith(u8, relative, "palemoon/")) continue;
         if (!sys.safePath(relative)) return error.InvalidTemplatePath;
         const target = try c.fmt("{s}/{s}", .{ root, relative });
         const backup = try c.fmt("{s}/owendots/backup/{s}", .{ root, relative });
@@ -101,12 +101,53 @@ pub fn apply(c: Context) !void {
     // browsers use their own managed profile; an existing personal profile stays intact.
     for ([_][]const u8{ "firefox", "palemoon" }) |browser| {
         const profile = try c.fmt("{s}/owendots/{s}", .{ root, browser });
-        for ([_][]const u8{ "user.js", "chrome/userChrome.css" }) |file| {
-            const source = if (std.mem.eql(u8, file, "user.js")) "firefox" else browser;
+        for ([_][]const u8{ "user.js", "chrome/userChrome.css", "chrome/userContent.css" }) |file| {
+            const source = if (!std.mem.eql(u8, file, "chrome/userChrome.css")) "firefox" else browser;
             try c.write(try c.fmt("{s}/{s}", .{ profile, file }), try c.read(try c.fmt("{s}/{s}/{s}", .{ stage, source, file })));
         }
     }
+    try launchers(c);
     try c.print("Applied palette. Original files: {s}/owendots/backup\nRestart applications to reload their colors.\n", .{root});
+}
+
+pub fn launchBrowser(c: Context, name: []const u8, arguments: []const []const u8) !void {
+    try user(c);
+    if (!std.mem.eql(u8, name, "firefox") and !std.mem.eql(u8, name, "palemoon")) return error.UnknownBrowser;
+    var argv: std.ArrayList([]const u8) = .empty;
+    try argv.appendSlice(c.a, &.{ name, "--no-remote", "--profile", try c.fmt("{s}/owendots/{s}", .{ try config(c), name }) });
+    try argv.appendSlice(c.a, arguments);
+    try c.run(argv.items);
+}
+
+fn launchers(c: Context) !void {
+    const data_home = (c.env orelse return error.MissingEnvironment).get("XDG_DATA_HOME") orelse try c.fmt("{s}/.local/share", .{try c.environment("HOME")});
+    if (!std.fs.path.isAbsolute(data_home)) return error.AbsoluteDataPathRequired;
+    const apps = [_]struct { []const u8, []const u8, []const u8, []const u8 }{
+        .{ "firefox", "Firefox", "browser firefox %U", "web-browser-symbolic" },
+        .{ "palemoon", "Pale Moon", "browser palemoon %U", "web-browser-symbolic" },
+        .{ "owendots-terminal", "Terminal", "launch terminal", "utilities-terminal-symbolic" },
+        .{ "owendots-files", "Files", "launch files", "folder-symbolic" },
+        .{ "owendots-telegram", "Telegram", "launch telegram", "mail-send-symbolic" },
+        .{ "owendots-settings", "Settings", "menu", "preferences-system-symbolic" },
+    };
+    for (apps) |app| {
+        const path = try c.fmt("{s}/applications/{s}.desktop", .{ data_home, app[0] });
+        const saved = try c.fmt("{s}/owendots/backup/desktop/{s}.desktop", .{ try config(c), app[0] });
+        const original = c.read(path) catch |err| switch (err) {
+            error.FileNotFound => null,
+            else => return err,
+        };
+        if (original) |text| {
+            _ = c.read(saved) catch |err| switch (err) {
+                error.FileNotFound => blk: {
+                    try c.write(saved, text);
+                    break :blk text;
+                },
+                else => return err,
+            };
+        }
+        try c.write(path, try c.fmt("[Desktop Entry]\nType=Application\nName={s}\nExec=owendots {s}\nIcon={s}\nTerminal=false\nCategories=Utility;\n", .{ app[1], app[2], app[3] }));
+    }
 }
 
 pub fn launch(c: Context, kind: []const u8, arguments: []const []const u8) !void {

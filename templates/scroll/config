@@ -4,7 +4,7 @@ animations {
 }
 default_decoration border_radius 0 shadow false dim false
 exec owendots session-ready
-seat seat0 xcursor_theme whiteglass 24
+seat seat0 xcursor_theme Adwaita 24
 for_window [app_id="^org[.]owendots[.]control$"] fullscreen enable
 font pango:JetBrainsMono Nerd Font Mono 10
 input type:keyboard {
@@ -25,9 +25,18 @@ bindsym $mod+Return exec owendots launch terminal
 bindsym $mod+Shift+b exec owendots launch browser
 bindsym $mod+Shift+e exec owendots launch files
 bindsym $mod+d exec walker
+bindsym $mod+space exec walker
 bindsym $mod+Shift+v exec owendots clipboard
 bindsym $mod+comma exec owendots menu
 bindsym $mod+q kill
+bindsym $mod+Left focus left
+bindsym $mod+Right focus right
+bindsym $mod+Page_Up workspace prev_on_output
+bindsym $mod+Page_Down workspace next_on_output
+bindsym --whole-window $mod+button4 workspace prev_on_output
+bindsym --whole-window $mod+button5 workspace next_on_output
+bindsym --whole-window $mod+Shift+button4 focus left
+bindsym --whole-window $mod+Shift+button5 focus right
 bindsym $mod+h focus left
 bindsym $mod+l focus right
 bindsym $mod+j focus down

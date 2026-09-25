@@ -1,14 +1,52 @@
-add_newline = false
-format = "$directory$git_branch$git_status$character"
+add_newline = true
+format = "$os$username$hostname$directory$git_branch$git_status$cmd_duration$time$line_break$character"
+
+[os]
+disabled = false
+format = "[ $symbol ]($style)"
+style = "fg:{{foreground}} bg:{{surface}}"
+[os.symbols]
+Linux = ""
+Unknown = ""
+
+[username]
+show_always = true
+format = "[$user]($style)"
+style_user = "fg:{{foreground}} bg:{{surface}}"
+style_root = "fg:{{red}} bg:{{surface}}"
+
+[hostname]
+ssh_only = false
+format = "[@$hostname ]($style)"
+style = "fg:{{muted}} bg:{{surface}}"
 
 [directory]
-style = "{{accent}}"
+format = "[ $path ]($style)"
+style = "fg:{{background}} bg:{{accent}}"
 truncation_length = 3
+truncation_symbol = "…/"
 
 [git_branch]
-style = "{{muted}}"
-format = "[$branch]($style) "
+format = "[ $symbol$branch ]($style)"
+style = "fg:{{background}} bg:{{green}}"
+symbol = " "
+
+[git_status]
+format = "[ $all_status$ahead_behind ]($style)"
+style = "fg:{{background}} bg:{{green}}"
+
+[cmd_duration]
+min_time = 500
+format = "[ $duration ]($style)"
+style = "fg:{{background}} bg:{{yellow}}"
+
+[time]
+disabled = false
+time_format = "%H:%M"
+utc_time_offset = "0"
+format = "[ $time UTC ]($style)"
+style = "fg:{{background}} bg:{{magenta}}"
 
 [character]
-success_symbol = "[❯]({{accent}})"
+success_symbol = "[❯]({{green}})"
 error_symbol = "[❯]({{red}})"

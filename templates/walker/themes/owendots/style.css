@@ -29,3 +29,10 @@
 .large-icons { -gtk-icon-size: 32px; }
 .error { background: {{background}}; color: {{red}}; padding: 10px; }
 .preview { color: {{foreground}}; border: 1px solid {{border}}; }
+
+.normal-icons, .large-icons {
+  -gtk-icon-style: symbolic;
+  color: {{accent}};
+  -gtk-icon-palette: success {{accent}}, warning {{accent}}, error {{accent}};
+}
+child:selected image, row:selected image { color: {{background}}; }

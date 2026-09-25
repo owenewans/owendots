@@ -23,10 +23,13 @@ fn execute(c: sys.Context, args: []const []const u8) !void {
     if (args.len == 6 and std.mem.eql(u8, args[1], "theme") and std.mem.eql(u8, args[2], "generate")) {
         return palette.generate(c, args[3], args[4], args[5]);
     }
+    if (args.len == 3 and std.mem.eql(u8, args[1], "system-theme")) return @import("appearance.zig").apply(c, args[2]);
+    if (args.len == 3 and std.mem.eql(u8, args[1], "theme") and std.mem.eql(u8, args[2], "system")) return @import("appearance.zig").apply(c, try c.fmt("{s}/owendots/palette.toml", .{try desktop.config(c)}));
     if (args.len == 3 and std.mem.eql(u8, args[1], "install")) return installer.start(c, args[2]);
     if (args.len == 3 and std.mem.eql(u8, args[1], "theme") and std.mem.eql(u8, args[2], "apply")) return desktop.apply(c);
     if (args.len == 2 and std.mem.eql(u8, args[1], "configure")) return desktop.configure(c);
     if (args.len == 2 and std.mem.eql(u8, args[1], "menu")) return c.run(&.{"/usr/bin/owenctl"});
+    if (args.len >= 3 and std.mem.eql(u8, args[1], "browser")) return desktop.launchBrowser(c, args[2], args[3..]);
     if (args.len >= 3 and std.mem.eql(u8, args[1], "launch")) return desktop.launch(c, args[2], args[3..]);
     if (args.len == 2 and std.mem.eql(u8, args[1], "screenshot")) return desktop.screenshot(c);
     if (args.len == 2 and std.mem.eql(u8, args[1], "clipboard")) return desktop.clipboard(c);

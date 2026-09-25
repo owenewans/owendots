@@ -8,7 +8,7 @@ input {
     touchpad { tap; natural-scroll; }
 }
 spawn-at-startup "owendots" "session-ready"
-cursor { xcursor-theme "whiteglass"; xcursor-size 24; }
+cursor { xcursor-theme "Adwaita"; xcursor-size 24; }
 prefer-no-csd
 screenshot-path null
 animations { off; }
@@ -34,11 +34,20 @@ binds {
     Mod+Shift+B { spawn "owendots" "launch" "browser"; }
     Mod+Shift+E { spawn "owendots" "launch" "files"; }
     Mod+D { spawn "walker"; }
+    Mod+Space { spawn "walker"; }
     Mod+Shift+V { spawn "owendots" "clipboard"; }
     Mod+Comma { spawn "owendots" "menu"; }
     Mod+Q { close-window; }
     Mod+Shift+Q { quit; }
     Mod+Shift+Slash { show-hotkey-overlay; }
+    Mod+Left { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    Mod+Page_Up { focus-workspace-up; }
+    Mod+Page_Down { focus-workspace-down; }
+    Mod+WheelScrollUp cooldown-ms=150 { focus-workspace-up; }
+    Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+    Mod+Shift+WheelScrollUp cooldown-ms=150 { focus-column-left; }
+    Mod+Shift+WheelScrollDown cooldown-ms=150 { focus-column-right; }
     Mod+H { focus-column-left; }
     Mod+L { focus-column-right; }
     Mod+J { focus-window-down; }

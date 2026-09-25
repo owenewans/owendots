@@ -79,7 +79,10 @@ fn stage(c: sys.Context, o: Options, loader: bool) !void {
     try c.run(&.{ "mv", "--", try c.fmt("{s}.part", .{kernel}), kernel });
     try c.run(&.{ "mv", "--", try c.fmt("{s}{s}", .{ target, initrd }), try c.fmt("{s}/initramfs-{s}.img", .{ assets, o.version }) });
     const config = try c.fmt("{s}/limine.conf", .{fat});
-    try c.write(try c.fmt("{s}.part", .{config}), try render(c.a, o.uuid, o.version, previous));
+    const entries = try render(c.a, o.uuid, o.version, previous);
+    const first = std.mem.indexOf(u8, entries, "\n/").?;
+    const theme = try @import("appearance.zig").boot(c, target);
+    try c.write(try c.fmt("{s}.part", .{config}), try c.fmt("timeout: 5\n{s}{s}", .{ theme, entries[first..] }));
     try c.run(&.{ "mv", "--", try c.fmt("{s}.part", .{config}), config });
     if (loader and o.firmware == .uefi) {
         const directory = try c.fmt("{s}/EFI/BOOT", .{fat});

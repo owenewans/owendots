@@ -17,7 +17,7 @@ for program in "$compositor" pipewire pipewire-pulse wireplumber wl-paste cliphi
 done
 export XDG_SESSION_TYPE=wayland XDG_CURRENT_DESKTOP="$compositor" XDG_SESSION_DESKTOP="$compositor"
 export LANG=en_US.UTF-8 TZ=UTC
-export XCURSOR_THEME=whiteglass XCURSOR_SIZE=24
+export XCURSOR_THEME=Adwaita XCURSOR_SIZE=24
 export OWENDOTS_SESSION_DIR
 OWENDOTS_SESSION_DIR=$(mktemp -d "$XDG_RUNTIME_DIR/owendots.XXXXXXXX")
 cleanup() {

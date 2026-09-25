@@ -5,7 +5,7 @@ hide_action_hints = true
 ext_background_effect_blur = false
 
 [providers]
-default = ["desktopapplications", "runner"]
+default = ["desktopapplications"]
 empty = ["desktopapplications"]
 max_results = 30
 

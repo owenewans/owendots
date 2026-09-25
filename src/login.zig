@@ -72,7 +72,7 @@ pub fn enable(c: sys.Context) !void {
     const init = try inittab(c.a, try c.read("/etc/inittab"));
     for ([_][]const u8{ "/etc/inittab", "/etc/rc.d/rc.4.local", "/etc/pam.d/ly", "/etc/ly/config.ini" }) |path| try backup(c, path);
     try c.write("/etc/pam.d/ly", "#%PAM-1.0\nauth include login\naccount include login\npassword include login\nsession include login\n");
-    try c.write("/etc/rc.d/rc.4.local", "#!/bin/sh\nexport LANG=en_US.UTF-8 TZ=UTC\n/usr/bin/chvt 2\nexec /sbin/agetty -n -l /usr/bin/ly-dm tty2 38400 linux\n");
+    try c.write("/etc/rc.d/rc.4.local", "#!/bin/sh\nexport LANG=en_US.UTF-8 TZ=UTC\n/usr/bin/chvt 2\n/usr/bin/setfont -C /dev/tty2 /usr/share/kbd/consolefonts/ter-v16n.psf.gz\nexec /sbin/agetty -n -l /usr/bin/ly-dm tty2 38400 linux\n");
     try c.run(&.{ "chmod", "755", "/etc/rc.d/rc.4.local" });
     try c.run(&.{ "mkdir", "-p", "/etc/owendots/sessions", "/etc/owendots/sessions-x11", "/etc/ly/custom-sessions" });
     for ([_][]const u8{ "niri", "scroll" }) |name| {
@@ -105,6 +105,8 @@ pub fn enable(c: sys.Context) !void {
         \\
     );
     try c.write("/etc/inittab", init);
+    const custom_palette = c.read("/etc/owendots/palette.toml") catch null;
+    try @import("appearance.zig").apply(c, if (custom_palette != null) "/etc/owendots/palette.toml" else "/usr/share/owendots/palette.toml");
     try c.print("Enabled Ly on tty2 for the next boot. Other console logins remain available.\n", .{});
 }
 

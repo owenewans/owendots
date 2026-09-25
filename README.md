@@ -67,10 +67,22 @@ owendots launch browser
 ```
 
 `configure` selects launch defaults and applies templates; it does not install
-applications. Edit `~/.config/owendots/palette.toml` and run `theme apply` to
-regenerate colors. The first existing configuration is saved under
+applications. Open `owendots menu` and choose Palette to edit colors with a
+color picker. The palette file is `~/.config/owendots/palette.toml`;
+`owendots theme apply` regenerates application configs. The first existing configuration is saved under
 `~/.config/owendots/backup/`. Firefox and Pale Moon use managed profiles under
 `~/.config/owendots/`; existing browser profiles remain separate.
+
+Walker browser entries use these profiles too. Run `owendots browser firefox`
+or `owendots browser palemoon` to open one directly. Walker searches application
+entries by default; prefix a command with `>` to use its command runner.
+
+`owendots theme system` applies the palette to Ly and Limine through doas.
+It preserves boot entries and saves the previous boot configuration once.
+The menu provides the same action under Palette → login / boot.
+
+Win+Space opens Walker. Win+wheel and Win+PageUp/PageDown change workspaces;
+Win+Left/Right and Win+Shift+wheel focus windows. US/RU toggles with Caps Lock.
 
 `launch` also accepts `files`, `telegram`, `monitor` and `editor`, followed by
 literal application arguments. `screenshot` copies a selected region, and

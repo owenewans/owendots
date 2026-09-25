@@ -1,0 +1,10 @@
+@-moz-document url("about:newtab"), url("about:home"), url("about:blank") {
+    html, body, #root { background: {{background}} !important; color: {{foreground}} !important; }
+    body { --newtab-background-color: {{background}} !important; --newtab-text-primary-color: {{foreground}} !important; --newtab-element-hover-color: {{surface}} !important; }
+    * { border-radius: 0 !important; box-shadow: none !important; }
+    a, .title, .search-wrapper input { color: {{foreground}} !important; }
+    .search-wrapper input, .search-handoff-button, .tile, .top-site-outer:hover {
+        background: {{surface}} !important;
+        color: {{foreground}} !important;
+    }
+}
