@@ -234,7 +234,7 @@ The 2026.09.25-preview2 bundle passed fresh UEFI/GPT and BIOS/MBR ext4
 installations through `install.sh`, including HTTPS download and pinned archive
 verification. Both booted from disk. A fresh UEFI installation then deployed
 all application choices through the TUI, configured its Slackware mirror and key,
-and passed executable/shared-library checks. The final ISO booted through Ventoy 1.1.17 in UEFI normal mode, initialized
+and passed executable/shared-library checks. The final ISO booted through Ventoy 1.1.17 in UEFI and BIOS normal modes, initialized
 its verified runtime and opened the disk TUI. Bootstrap failure tests run in Podman cover checksum rejection,
 download failure, existing destinations, archive traversal, symlinks and the
 live-environment guard. Manuals ship in the tarball, ISO and installed package.
