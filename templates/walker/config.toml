@@ -1,0 +1,22 @@
+theme = "owendots"
+close_when_open = true
+hide_quick_activation = true
+hide_action_hints = true
+ext_background_effect_blur = false
+
+[providers]
+default = ["desktopapplications", "runner"]
+empty = ["desktopapplications"]
+max_results = 30
+
+[[providers.prefixes]]
+prefix = ">"
+provider = "runner"
+
+[[providers.prefixes]]
+prefix = "/"
+provider = "files"
+
+[[providers.prefixes]]
+prefix = ";"
+provider = "providerlist"

@@ -1,0 +1,31 @@
+* {
+  all: unset;
+  font-family: "JetBrainsMono Nerd Font Mono";
+  font-size: 14px;
+  border-radius: 0;
+  box-shadow: none;
+}
+.box-wrapper, popover {
+  background: {{background}};
+  color: {{foreground}};
+  border: 1px solid {{border}};
+  padding: 14px;
+}
+.input {
+  background: {{surface}};
+  color: {{foreground}};
+  caret-color: {{accent}};
+  padding: 10px;
+}
+.input selection, child:selected .item-box, row:selected .item-box {
+  background: {{accent}};
+  color: {{background}};
+}
+.input placeholder, .item-subtext, .placeholder, .keybinds {
+  color: {{muted}};
+}
+.item-box { padding: 8px; }
+.normal-icons { -gtk-icon-size: 16px; }
+.large-icons { -gtk-icon-size: 32px; }
+.error { background: {{background}}; color: {{red}}; padding: 10px; }
+.preview { color: {{foreground}}; border: 1px solid {{border}}; }

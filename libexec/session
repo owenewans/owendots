@@ -61,4 +61,5 @@ if [[ -x /usr/libexec/polkit-gnome-authentication-agent-1 ]]; then
     /usr/libexec/polkit-gnome-authentication-agent-1 &
 fi
 if command -v elephant >/dev/null; then elephant & fi
+if command -v walker >/dev/null; then walker --gapplication-service & fi
 wait "$compositor_pid"
