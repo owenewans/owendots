@@ -93,6 +93,10 @@ or `owendots session scroll`. The session starts PipeWire, WirePlumber, Waybar,
 Dunst and clipboard watchers, then stops its children when the compositor exits.
 The package also provides display-manager session entries.
 
+Scroll uses software cursors on virtio graphics to avoid inverted cursor images
+in QEMU. The control window uses native Wayland and opens as a centered floating
+window. Win+Shift+Q ends the session; Win+Shift+C reloads its configuration.
+
 `network`, `audio`, `bluetooth` and `power` open terminal controls. Bluetooth
 service changes use doas. After installing audio packages, root runs
 `owendots desktop-system` to configure audio-group PAM limits and remove

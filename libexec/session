@@ -18,6 +18,14 @@ done
 export XDG_SESSION_TYPE=wayland XDG_CURRENT_DESKTOP="$compositor" XDG_SESSION_DESKTOP="$compositor"
 export LANG=en_US.UTF-8 TZ=UTC
 export XCURSOR_THEME=Adwaita XCURSOR_SIZE=24
+if [[ $compositor == scroll ]]; then
+    for vendor in /sys/class/drm/card*/device/vendor; do
+        if [[ -r $vendor && $(<"$vendor") == 0x1af4 ]]; then
+            export WLR_NO_HARDWARE_CURSORS=1
+            break
+        fi
+    done
+fi
 export OWENDOTS_SESSION_DIR
 OWENDOTS_SESSION_DIR=$(mktemp -d "$XDG_RUNTIME_DIR/owendots.XXXXXXXX")
 cleanup() {

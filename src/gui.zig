@@ -90,6 +90,7 @@ pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(c.a);
     r.SetTraceLogLevel(if (args.len == 2 and std.mem.eql(u8, args[1], "--debug")) r.LOG_DEBUG else r.LOG_WARNING);
     _ = r.setenv("SDL_APP_ID", "org.owendots.control", 1);
+    if (init.environ_map.get("WAYLAND_DISPLAY") != null) _ = r.setenv("SDL_VIDEODRIVER", "wayland", 0);
     r.SetConfigFlags(r.FLAG_WINDOW_RESIZABLE | r.FLAG_WINDOW_HIGHDPI);
     r.InitWindow(880, 650, "owendots");
     defer r.CloseWindow();
