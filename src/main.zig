@@ -11,10 +11,12 @@ const installer = @import("installer.zig");
 const desktop = @import("desktop.zig");
 const control = @import("control.zig");
 const login = @import("login.zig");
+const deploy = @import("deploy.zig");
 
 fn execute(c: sys.Context, args: []const []const u8) !void {
-    if (args.len == 1 or std.mem.eql(u8, args[1], "--help")) {
-        return c.print("owendots - Slackware workstation tools\n\nowendots theme generate PALETTE TEMPLATES OUTPUT\nowendots theme apply\nowendots configure\nowendots launch terminal|browser|files|telegram|monitor|editor [ARGS...]\nowendots menu\nowendots network|audio|bluetooth|display|power\nowendots session niri|scroll\nowendots desktop-system|display-manager (root)\nowendots screenshot|clipboard\nowendots install MEDIA_DIRECTORY (live environment only)\n", .{});
+    if (args.len == 1) return deploy.start(c);
+    if (std.mem.eql(u8, args[1], "--help")) {
+        return c.print("owendots - Slackware workstation tools\n\nowendots (select and deploy desktop applications)\nowendots theme generate PALETTE TEMPLATES OUTPUT\nowendots theme apply\nowendots configure\nowendots launch terminal|browser|files|telegram|monitor|editor [ARGS...]\nowendots menu\nowendots network|audio|bluetooth|display|power\nowendots session niri|scroll\nowendots desktop-system|display-manager (root)\nowendots screenshot|clipboard\nowendots install MEDIA_DIRECTORY (live environment only)\n", .{});
     }
     if (args.len == 7 and std.mem.eql(u8, args[1], "theme") and std.mem.eql(u8, args[2], "generate")) return error.TooManyArguments;
     if (args.len == 6 and std.mem.eql(u8, args[1], "theme") and std.mem.eql(u8, args[2], "generate")) {
@@ -32,6 +34,7 @@ fn execute(c: sys.Context, args: []const []const u8) !void {
     if (args.len == 4 and std.mem.eql(u8, args[1], "service")) return control.service(c, args[2], args[3]);
     if (args.len == 2 and std.mem.eql(u8, args[1], "desktop-system")) return system.desktop(c);
     if (args.len == 2 and std.mem.eql(u8, args[1], "display-manager")) return login.enable(c);
+    if (args.len == 3 and std.mem.eql(u8, args[1], "deploy-system")) return deploy.install(c, args[2]);
     if (args.len == 2 and std.mem.eql(u8, args[1], "session-ready")) return c.run(&.{ "/usr/libexec/owendots/session", "ready" });
     if (args.len == 3 and std.mem.eql(u8, args[1], "session")) {
         if (!std.mem.eql(u8, args[2], "niri") and !std.mem.eql(u8, args[2], "scroll")) return error.UnknownCompositor;
@@ -63,5 +66,6 @@ test {
     std.testing.refAllDecls(desktop);
     std.testing.refAllDecls(control);
     std.testing.refAllDecls(login);
+    std.testing.refAllDecls(deploy);
     std.testing.refAllDecls(@import("display.zig"));
 }

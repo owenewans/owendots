@@ -21,8 +21,9 @@ slackware-current installer and workstation configuration.
 - per-user application choices, managed browser profiles and original config backups
 - Zig/Raygui desktop controls and palette editor
 - monitor mode and scale selection with timed rollback
+- desktop package selection, cache verification and pkgtools deployment
 
-Development is in progress. Desktop deployment and the full application set
+Development is in progress. Current updates and the full application set
 are unfinished. BIOS/ext4, BIOS/F2FS and UEFI/XFS base installs have booted in QEMU;
 the remaining acceptance scenarios are in progress. See
 [scope and acceptance requirements](SPEC.md).
@@ -40,6 +41,12 @@ The static executable is `zig-out/bin/owendots`. At installation time, use a
 Slackware live environment with `dialog`, pkgtools and filesystem utilities.
 
 ## usage
+
+After the base installation, log in as a wheel user and run `owendots`.
+Select applications, review the package plan and authenticate with doas.
+Deployment verifies the selected USB cache before invoking pkgtools, enables
+Ly and applies the user's palette. Missing packages require download confirmation.
+An incomplete application bundle stops before installation.
 
 Generate application configurations:
 
