@@ -78,6 +78,11 @@ service changes use doas. After installing audio packages, root runs
 PipeWire/WirePlumber file capabilities that interfere with session D-Bus.
 Log out and back in to apply those limits.
 
+Root can run `owendots display-manager` to enable Ly for the next boot.
+It reserves tty2 in runlevel 4, keeps other console logins and saves original
+system files under `/var/lib/owendots/backup/`. Ly uses Slackware's login PAM
+stack and offers installed owendots sessions.
+
 From the prepared live environment, start the installer as root:
 
 ```sh
@@ -150,6 +155,8 @@ filesystem cases still need acceptance.
 The Niri desktop has opened Foot, htop and a Firefox HTTPS page in QEMU.
 Session tests cover compositor environment transfer and child cleanup in
 Slackware-current. Physical GPU, Bluetooth and modem checks remain outstanding.
+Ly login, logout, reboot to Ly and clipboard-history retention passed in the
+UEFI desktop VM. mpv rendered test video through virgl and opened PipeWire audio.
 
 ## license
 

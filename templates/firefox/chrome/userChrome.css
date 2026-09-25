@@ -13,5 +13,16 @@
 }
 * { border-radius: 0 !important; box-shadow: none !important; }
 #navigator-toolbox { font-family: "JetBrainsMono Nerd Font Mono" !important; }
+#navigator-toolbox, #TabsToolbar, #nav-bar, #PersonalToolbar,
+#urlbar-background, #searchbar, panel, menupopup {
+    background-color: var(--owen-background) !important;
+    color: var(--owen-foreground) !important;
+}
+.tab-background[selected], .tab-background[multiselected] {
+    background-color: var(--owen-surface) !important;
+}
+#urlbar-input, .tab-text, toolbarbutton {
+    color: var(--owen-foreground) !important;
+}
 .titlebar-buttonbox-container, .titlebar-spacer { display: none !important; }
 .tab-background[selected] { border-bottom: 1px solid var(--owen-accent) !important; }

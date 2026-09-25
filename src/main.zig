@@ -10,6 +10,7 @@ const media = @import("media.zig");
 const installer = @import("installer.zig");
 const desktop = @import("desktop.zig");
 const control = @import("control.zig");
+const login = @import("login.zig");
 
 fn execute(c: sys.Context, args: []const []const u8) !void {
     if (args.len == 1 or std.mem.eql(u8, args[1], "--help")) {
@@ -29,6 +30,7 @@ fn execute(c: sys.Context, args: []const []const u8) !void {
     if (args.len == 3 and std.mem.eql(u8, args[1], "control")) return control.run(c, args[2]);
     if (args.len == 4 and std.mem.eql(u8, args[1], "service")) return control.service(c, args[2], args[3]);
     if (args.len == 2 and std.mem.eql(u8, args[1], "desktop-system")) return system.desktop(c);
+    if (args.len == 2 and std.mem.eql(u8, args[1], "display-manager")) return login.enable(c);
     if (args.len == 2 and std.mem.eql(u8, args[1], "session-ready")) return c.run(&.{ "/usr/libexec/owendots/session", "ready" });
     if (args.len == 3 and std.mem.eql(u8, args[1], "session")) {
         if (!std.mem.eql(u8, args[2], "niri") and !std.mem.eql(u8, args[2], "scroll")) return error.UnknownCompositor;
@@ -59,4 +61,5 @@ test {
     std.testing.refAllDecls(installer);
     std.testing.refAllDecls(desktop);
     std.testing.refAllDecls(control);
+    std.testing.refAllDecls(login);
 }
