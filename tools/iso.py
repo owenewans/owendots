@@ -78,6 +78,8 @@ for name in live_names:
 # Keep Slackware's initialization intact. The wrapper supplies its fake login.
 (overlay / 'usr/bin/owendots-live-init').write_text('''#!/bin/sh
 printf 'root\\n' | /etc/rc.d/rc.S
+# restore the clock after setup backdates it.
+hwclock -s -u
 mkdir -p /run /media/owendots
 printf 'slackware64-current\\n' > /run/owendots-live
 udevadm settle
@@ -98,7 +100,7 @@ if [ -f /media/owendots/manifest.json ]; then
   update-ca-certificates
   cd /
 fi
-dhcpcd -b -t 15 >/var/log/owendots-dhcp.log 2>&1
+dhcpcd -w -t 20 >/var/log/owendots-dhcp.log 2>&1 || printf 'DHCP unavailable; configure networking before downloading.\\n'
 printf '\\nRun: owendots install /media/owendots\\n'
 ''')
 (overlay / 'usr/bin/owendots-live-init').chmod(0o755)
@@ -121,6 +123,8 @@ for filename in ['limine-bios.sys', 'limine-bios-cd.bin', 'limine-uefi-cd.bin']:
     shutil.copy2(args.limine / filename, iso / 'boot/limine' / filename)
 shutil.copy2(args.limine / 'LICENSE', iso / 'boot/limine/LICENSE')
 shutil.copy2(pathlib.Path(__file__).resolve().parent.parent / 'LICENSE', iso / 'LICENSE.owendots')
+shutil.copy2(pathlib.Path(__file__).resolve().parent.parent / 'manual.txt', iso / 'manual.txt')
+shutil.copy2(pathlib.Path(__file__).resolve().parent.parent / 'install.sh', iso / 'install.sh')
 shutil.copy2(args.limine / 'BOOTX64.EFI', iso / 'EFI/BOOT/BOOTX64.EFI')
 (iso / 'boot/limine/limine.conf').write_text('''timeout: 3
 

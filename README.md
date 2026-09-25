@@ -23,10 +23,36 @@ slackware-current installer and workstation configuration.
 - monitor mode and scale selection with timed rollback
 - desktop package selection, cache verification and pkgtools deployment
 
-Development is in progress. Current updates and the full application set
-are unfinished. BIOS/ext4, BIOS/F2FS and UEFI/XFS base installs have booted in QEMU;
-the remaining acceptance scenarios are in progress. See
-[scope and acceptance requirements](SPEC.md).
+This is a preview release. Clean USB bootstrap, base installation and desktop
+deployment have passed in QEMU. Physical hardware and the remaining acceptance
+scenarios need testing; see [scope and acceptance requirements](SPEC.md).
+
+## install from USB
+
+Download `owendots-current.iso` from the same release as `install.sh` and copy
+it onto Ventoy. Boot that image, connect to the Internet and run as root:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/owenewans/owendots/2026.09.25-preview1/install.sh | bash
+```
+
+The script downloads the compiled installer and its package bundle, checks a
+pinned SHA-256, extracts into `./owendots-install`, and starts the disk TUI.
+It leaves a Russian/English `manual.txt` in that directory. It rejects an
+existing destination and runs only in the owendots current installer environment.
+Reserve 3 GiB for download and extraction, in addition to the live system's RAM.
+This bootstrap does not support the stock Slackware 15.0 installer.
+
+Choose the disk and partitions yourself and review the complete plan before
+typing the disk path to confirm erasure. After installation, reboot, log in as
+a wheel user and run `owendots` to select and deploy applications. The installed
+manual is `/usr/doc/owendots/manual.txt`.
+
+For offline installation, the ISO already contains the same package medium:
+
+```sh
+owendots install /media/owendots
+```
 
 ## build
 
@@ -193,8 +219,8 @@ BIOS/MBR with ext4 and UEFI/GPT with XFS have passed base installation and
 Limine disk boot. The UEFI test also passed DHCP, HTTPS, user password login
 and root key login. BIOS/F2FS passed disk boot, DHCP, zram and user locale checks.
 Container tests cover palette rejection, config backups, managed browser
-profiles and literal launch arguments. Desktop, kernel updates, Ventoy and the remaining
-filesystem cases still need acceptance.
+profiles and literal launch arguments. Kernel updates, booting through Ventoy and
+the remaining filesystem cases still need acceptance.
 
 The Niri desktop has opened Foot, htop and a Firefox HTTPS page in QEMU.
 Session tests cover compositor environment transfer and child cleanup in
@@ -202,8 +228,17 @@ Slackware-current. Physical GPU, Bluetooth and modem checks remain outstanding.
 Ly login, logout, reboot to Ly and clipboard-history retention passed in the
 UEFI desktop VM. mpv rendered test video through virgl and opened PipeWire audio.
 Raygui controls, palette validation and editing, 125% scaling and display timeout
-rollback were exercised through QEMU keyboard/mouse input. Scroll still needs
-the corresponding desktop tests.
+rollback were exercised through QEMU keyboard/mouse input. Scroll cursor orientation, native Wayland controls and window focus bindings
+were checked in QEMU.
+
+The 2026.09.25-preview1 bundle passed fresh UEFI/GPT and BIOS/MBR ext4
+installations through `install.sh`, including HTTPS download and pinned archive
+verification. Both booted from disk. A fresh UEFI installation then deployed
+all application choices through the TUI, configured its Slackware mirror and key,
+and passed executable/shared-library checks. The final ISO booted to its live
+root shell. Bootstrap failure tests run in Podman cover checksum rejection,
+download failure, existing destinations, archive traversal, symlinks and the
+live-environment guard. Manuals ship in the tarball, ISO and installed package.
 
 ## license
 

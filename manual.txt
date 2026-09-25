@@ -1,0 +1,110 @@
+OWENDOTS / SLACKWARE64-CURRENT
+
+РУССКИЙ
+
+1. Скопируй owendots-current.iso на флешку Ventoy обычным файлом. Загрузи его
+   через Ventoy. Для этого выпуска нужен именно этот образ, не установщик 15.0.
+   Поддерживаются x86_64, UEFI/GPT и BIOS/MBR; Secure Boot отключён.
+
+2. В установочной среде войди как root. Для скачивания нужен интернет.
+   Скачай install.sh из того же выпуска GitHub и выполни:
+       bash install.sh
+   Либо запусти опубликованную команду curl | bash из README.
+   Скрипт проверит SHA-256 готового архива, распакует его в ./owendots-install,
+   сохранит там этот manual.txt и откроет TUI. Компиляции на твоём ПК нет.
+   Для другой папки: bash install.sh /путь/к/новой/папке
+   Папка не должна существовать. Нужно свободное место под архив и распаковку.
+   Если используешь RAM установщика, это место расходует оперативную память.
+
+3. Выбери диск и задай разделы вручную. Установщик показывает полный план,
+   модель и серийный номер диска. Только ввод полного пути диска подтверждает
+   стирание его разделов. Сохрани нужные данные до установки.
+   UEFI: FAT32 /boot/efi. BIOS: FAT32 /boot/limine. Ядро и initramfs Limine
+   находятся на этом FAT-разделе. Корень /: ext4, XFS или F2FS; /home опционален.
+   Для диска около 1 ТБ можно выделить FAT 3 ГиБ, / 150 ГиБ, остальное /home.
+   Размеры и смещения вводятся в МиБ, автоматической разметки нет.
+
+4. Задай hostname, обязательный пароль root, пользователей, права wheel,
+   параметры SSH и doas. Приватные ключи и файлы с USB импортируются по выбору.
+   Locale en_US.UTF-8, часовой пояс UTC. Пароли из тестовых VM не используются.
+
+5. После завершения перезагрузи ПК и загрузись с установленного диска.
+   Войди обычным пользователем wheel и выполни:
+       owendots
+   Выбери развёртывание рабочего стола и приложения. Программа проверит пакеты,
+   настроит зеркало current и ключ Slackware, установит приложения и включит Ly.
+   Интернет нужен для выбора зеркала и отсутствующих в комплекте пакетов.
+   После развёртывания перезагрузи ПК и выбери niri или scroll в Ly.
+
+6. Win+Enter: терминал. Win+Space: запуск приложения. Win+запятая: настройки.
+   Win+колесо или Win+PageUp/PageDown: рабочие столы. Win+Left/Right либо
+   Win+Shift+колесо: окна. Caps Lock: US/RU. Print: область в буфер обмена.
+   Цвета меняются мышью в Palette. Login / boot применяет палитру к Ly и Limine.
+   Firefox из меню использует профиль owendots. Исходные конфиги сохраняются
+   в ~/.config/owendots/backup. Установленный manual: /usr/doc/owendots/manual.txt.
+
+7. Администрирование: doas /usr/sbin/slackpkg update обновляет списки пакетов.
+   doas /sbin/installpkg ./имя.txz устанавливает локальный Slackware-пакет.
+   holypkg преобразует чужие бинарные пакеты; зависимости он не устанавливает.
+   Обновление ядра требует обновления initramfs и FAT-файлов Limine:
+       doas owendots kernel ВЕРСИЯ
+   Предыдущее ядро и его модули нужно сохранять для резервной загрузки.
+
+QEMU: правый Ctrl+G переключает захват в поставляемом SDL-запуске VM.
+Физические GPU, Wi-Fi, Bluetooth и модемы нельзя считать проверенными через QEMU.
+При ошибке установщик останавливается. Не продолжай установку вслепую; сохрани
+текст ошибки. Повторный запуск распакованного установщика:
+    ./owendots-install/bin/owendots install ./owendots-install/media
+
+ENGLISH
+
+1. Copy owendots-current.iso onto Ventoy as a regular file and boot it.
+   This release requires that image, not the Slackware 15.0 installer.
+   Supported: x86_64, UEFI/GPT and BIOS/MBR, Secure Boot disabled.
+
+2. Run as root in the installer environment, with Internet access:
+       bash install.sh
+   Use install.sh from the same GitHub release, or the published curl | bash
+   command in README. The script checks the archive SHA-256, extracts it into
+   ./owendots-install, leaves this manual.txt there and starts the TUI.
+   Nothing is compiled on your computer. To choose another new directory:
+       bash install.sh /path/to/new/directory
+   Reserve space for both download and extraction. Files in the installer's
+   RAM filesystem consume RAM. An existing destination is not overwritten.
+
+3. Select a disk and define partitions manually. Review its model, serial and
+   the complete plan. Typing the full disk path confirms destruction of its
+   existing partitions. Back up your data before installation.
+   UEFI uses FAT32 /boot/efi; BIOS uses FAT32 /boot/limine. Limine reads kernels
+   and initramfs from FAT. Choose ext4, XFS or F2FS for /, with optional /home.
+   A 1 TB example: 3 GiB FAT, 150 GiB /, remaining space /home. Enter offsets and
+   sizes in MiB. The installer does not partition automatically.
+
+4. Set hostname, root password, users, wheel access, SSH and doas settings.
+   USB private-key and file imports are optional. Locale is en_US.UTF-8 and time
+   zone UTC. Test VM passwords are not assigned to physical installations.
+
+5. Reboot from the installed disk. Log in as a wheel user and run owendots.
+   Choose desktop deployment and your applications. Deployment verifies packages,
+   configures the current mirror and Slackware key, installs applications and
+   enables Ly. Internet is required for mirror selection and missing packages.
+   Reboot after deployment and select niri or scroll in Ly.
+
+6. Win+Enter opens a terminal; Win+Space opens the launcher; Win+comma opens
+   settings. Win+wheel or Win+PageUp/PageDown changes workspaces. Win+Left/Right
+   or Win+Shift+wheel focuses windows. Caps Lock switches US/RU. Print copies a
+   selected region. Palette offers a color picker; Login / boot applies colors
+   to Ly and Limine. Launcher Firefox uses the managed owendots profile.
+   Original configs: ~/.config/owendots/backup.
+   Installed manual: /usr/doc/owendots/manual.txt.
+
+7. doas /usr/sbin/slackpkg update refreshes repository metadata.
+   doas /sbin/installpkg ./package.txz installs a local Slackware package.
+   holypkg converts foreign binaries without installing their dependencies.
+   After installing a kernel, run doas owendots kernel VERSION to rebuild its
+   initramfs and FAT boot assets. Keep the previous kernel and modules installed.
+
+QEMU SDL: Right Ctrl+G toggles input capture. QEMU validation does not verify
+physical GPUs, Wi-Fi, Bluetooth or modems. Stop and retain the error output if
+installation fails. Restart the extracted installer with:
+    ./owendots-install/bin/owendots install ./owendots-install/media

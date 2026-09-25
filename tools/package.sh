@@ -24,6 +24,7 @@ install -d "$WORK/usr/share/owendots" "$WORK/usr/doc/owendots" "$WORK/install"
 cp -R "$project/templates" "$WORK/usr/share/owendots/"
 cp "$project/palette.toml" "$WORK/usr/share/owendots/"
 cp "$project/LICENSE" "$WORK/usr/doc/owendots/"
+cp "$project/manual.txt" "$WORK/usr/doc/owendots/"
 cat > "$WORK/install/slack-desc" <<'EOF'
 owendots: owendots (Slackware workstation configuration)
 owendots:
