@@ -40,7 +40,9 @@ The script downloads the compiled installer and its package bundle, checks a
 pinned SHA-256, extracts into `./owendots-install`, and starts the disk TUI.
 It leaves a Russian/English `manual.txt` in that directory. It rejects an
 existing destination and runs only in the owendots current installer environment.
-Reserve 3 GiB for download and extraction, in addition to the live system's RAM.
+Reserve 3 GiB of free space for download and extraction. For extraction into
+the live RAM filesystem, use at least 8 GiB RAM; the 6 GiB QEMU case ran out
+of tmpfs space and stopped without starting the disk installer.
 This bootstrap does not support the stock Slackware 15.0 installer.
 
 Choose the disk and partitions yourself and review the complete plan before
